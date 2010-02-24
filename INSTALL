@@ -1,0 +1,5 @@
+This module fails the tests intentionally. If you don't know how to bypass,
+the current development stage is not meant for you.
+
+Other than that, Package::Autoload is fairly straightforward in terms of
+installation.

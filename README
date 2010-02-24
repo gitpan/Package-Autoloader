@@ -1,0 +1,12 @@
+Package::Autoloader - generic autoloading for packages
+
+This module is a complement to L<Package::Transporter>, adding the
+functionality for DMN_AUTOLOAD. However, it can also stand on its own,
+increasing the potential for code re-use.
+
+Package::Autoloader supplies packages with subroutine definitions on
+the fly. Once a missing subroutine is encountered in a package, Perl's
+autoload mechanism is triggered and groups of rules are checked for a
+matching generator. By default a missing subroutine is generated
+inside a package by an eval().
+

@@ -1,0 +1,189 @@
+=pod
+
+=head1 NAME
+
+Package::Autoloader - generic autoloading for packages
+
+
+=head1 SYNOPSIS
+
+The following basic example demonstrates the use of a subroutine
+generating subroutine. 
+
+	package Synopsis::EX1;
+	use strict;
+	use Package::Autoloader sub{eval shift};
+	
+	my $generator = sub { 
+		return(qq{print 'Hello }.substr($_[2], 6).qq{.\n'});
+	};
+	Package::Autoloader::package_hierarchy_rule
+		($generator, 'Synopsis::', 'hello_');
+	
+	hello_world();
+
+
+	package Synopsis::EX2;
+	use strict;
+	use Package::Autoloader sub{eval shift};
+	
+	hello_bello();
+
+The generated subroutines hello_world and hello_bello both print Hello
+plus the second part of their name to the screen. The example makes
+maximum use of convenience features, so that it is enough to construct
+the print statement only, without the surrounding sub { ... }.
+
+If you supply an empty string instead of 'Synopsis::', the rule would
+be globally available to all packages using Package::Autoloader. Eeek!
+Support for rules along the inheritance list @ISA is also available.
+
+
+=head1 WARNING
+
+This is an early public release of Package::Autoloader. The module
+hasn't been thoroughly tested, making the probability of fatal bugs
+quiet high. It is not the goal of the release to provide a well-tested
+module, but to document the current development. That are the reasons
+why the installation of Package::Autoloader fails intentionally.
+
+
+=head1 DESCRIPTION
+
+This module is a complement to L<Package::Transporter>, adding the
+functionality for DMN_AUTOLOAD. However, it can also stand on its own,
+increasing the potential for code re-use.
+
+Package::Autoloader supplies packages with subroutine definitions on
+the fly. It requires individual activation with the sub-eval-shift
+like shown in the synopsis.
+
+Once a missing subroutine is encountered in a package, Perl's autoload
+mechanism is triggered and groups of rules are checked for a matching
+generator. If one is found, it should bring the subroutine into existence.
+
+By default a missing subroutine is generated inside a package by an
+eval(). It is actually a fast solution, easy to understand, and with
+straightforward results, bearing only a few surprises. Direct symbol
+table manipulations can't achieve the same, so its futile to discuss
+whether they are faster or slower with regards to the overall effort.
+
+In order to minimize the number of rules to evaluate, they are
+organized by purpose, package name, and subroutine name. 
+
+
+
+=head1 RULES
+
+A rule is a check whether a generator applies to a call for a
+missing subroutine. Example: a call for Ex::Ample::no_such_thing(7, [8, 9])
+will cause these style of checks to occur internally:
+
+	$rule->check('Ex::Ample', 'no_such_thing', 1, 7, [8, 9]);
+
+Included in Package::Autoloader is the general-purpose rule class
+Package::Autoloader::Rule. To create a rule object for the above
+example, use it as follows:
+
+	use Package::Autoloader::Rule;
+	my $rule = Package::Autoloader::Rule->new
+		($generator, 'Ex::Ample', 'no_such_thing', 1, '', 'ARRAY');
+
+	Package::Autoloader::package_hierarchy_rule($rule);
+
+However, it is not required to specify all details; normally the last
+item in rule creation is the subroutine name. Note that the standard
+rule class does not check the values of arguments, but rather the
+result of ref().
+
+Internally the rule will be stored in the pre-selection tree under
+
+	'Ex::Ample' => {'no_' => [$rule]}
+
+To widen the scope of a rule, shorten the two names. Ex:: applies to
+all package names starting with Ex:: (no wildcard required),
+Ex::(A|B|C) is recognized as a regular expression and an empty package
+name applies to all packages.
+
+Similarly for subroutine names. Specify no_ to match a name starting
+with no_ (no wildcard required), no_(parking|money) is recognized as a
+regular expression and an empty subroutine name applies to all
+subroutines.
+
+
+=head2 Generators
+
+A generator is an anonymous subroutine, which is called with all information its rule check got plus a visit point. Valid return values are:
+
+=over 8
+
+=item * B<a string not looking like a complete subroutine definition> - surroundings are added automatically.
+
+=item * B<a string starting with 'sub '> - taken as a complete definition and submitted to the eval(). Note that the string should include a return statement for a reference to the subroutine after the definition. 
+
+=item * B<a CODE reference> - assuming the generator already did all necessary steps, the reference is passed to the upper layers, where it will eventually hit the goto &$reference in the autoloader.
+
+=back
+
+
+The first parameter to the generator call is a package visit point, which is the anonymous subroutine 'sub{eval shift}' in the right place. The generator can use the visit point to submit code to the package. While you have access to lexical variables declared before the visit point, you can't create them. Because eval behaves like a block, not like an inline instruction.
+
+There is no general-purpose generator shipped with Package::Autoloader, because that function is covered by Package::Transporter. However, a manual crafted generator looks like the following:
+
+	my $generator = sub { 
+		my ($visit_point, $pkg_name, $sub_name, $argc) = 
+			(shift, shift, shift, shift);
+
+		#... do something to create the $sub_ref
+
+		return($sub_ref);
+	};
+
+
+=head1 PUBLIC INTERFACE REFERENCE
+
+Only the public interface of Package::Autoloader is documented in the following.
+
+=over 8
+
+=item B<package_hierarchy_rule>
+
+This rule is only considered while walking through the hierarchy of the package name. For the package name A::B::C the hierarchy is A::B, A.
+
+=item B<isa_listed_rule>
+
+This rule is only considered while walking through the package names in @ISA, which is maintained through 'use parent' (formerly 'use base').
+
+=back
+
+
+=head1 BUGS
+
+Please report unknown bugs via the "CPAN Request Tracker", which is the default way of managing such reports. If that is too much of hassle, then just drop me a note to the e-mail address below.
+
+http://rt.cpan.org/NoAuth/Bugs.html?Dist=Package-Autoloader
+
+This is an early public release. Also see the Todo file.
+
+
+=head1 AUTHOR
+
+Winfried Trumper E<lt>pub+perl(a)wt.tuxomania.netE<gt>
+
+
+=head1 COPYRIGHT
+
+Copyright (C) 2010 Winfried Trumper
+
+This module is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself.
+
+
+=head1 SEE ALSO
+
+L<Package::Transporter> complements Package::Autoloader in various ways.
+
+Some of the exporter modules also create subroutines on demand, most notably Sub::Exporter and Class::Exporter.
+
+
+=cut
