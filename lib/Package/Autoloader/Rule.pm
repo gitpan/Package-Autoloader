@@ -3,7 +3,7 @@ use strict;
 use warnings;
 
 sub ATB_GENERATOR() { 0 };
-sub ATB_PRE_SELECTION() { 1 };
+sub ATB_PRE_SELECT() { 1 };
 sub ATB_PKG_MATCH() { 2 };
 sub ATB_SUB_MATCH() { 3 };
 sub ATB_ARGC_MATCH() { 4 };
@@ -23,7 +23,7 @@ sub new {
 	if($sub_match =~ m/^([a-z0-9]*_)/i) {
 		$pre_selection->[1] = $1 || '';
 	}
-	$self->[ATB_PRE_SELECTION] = $pre_selection;
+	$self->[ATB_PRE_SELECT] = $pre_selection;
 
 	$self->[ATB_PKG_MATCH] = $self->create_matcher($pkg_match, '::');
 	$self->[ATB_SUB_MATCH] = $self->create_matcher($sub_match, '_');
@@ -33,8 +33,8 @@ sub new {
 }
 
 
-sub preselect {
-	return(@{$_[0][ATB_PRE_SELECTION]});
+sub pre_select {
+	return(@{$_[0][ATB_PRE_SELECT]});
 }
 
 

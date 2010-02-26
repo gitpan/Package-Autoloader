@@ -6,7 +6,7 @@ use Carp qw();
 sub new { bless({}, __PACKAGE__); }
 
 sub register_rule {
-	my ($self, $pkg_name, $sub_name, $rule) = @_;
+	my ($self, $rule, $pkg_name, $sub_name) = @_;
 
 	if ( length($pkg_name) and ($pkg_name !~ m,^((\w+)($|\:\:))+$,)) {
 		Carp::confess("Package name '$pkg_name' is not valid.\n");
@@ -24,6 +24,14 @@ sub register_rule {
 	return;
 }
 
+
+sub any_rules {
+	my ($self, $pkg_name, $sub_name) = @_;
+
+	return(0) unless(exists($self->{$pkg_name}));
+	return(0) unless(exists($self->{$pkg_name}{$sub_name}));
+	return(1);
+}
 
 sub lookup_rule {
 	my ($self, $pkg_list, $pkg_name, $sub_name) =
@@ -55,12 +63,6 @@ sub lookup_rule {
 	}
 	return(undef);
 }
-
-
-#sub dump {
-#	use Data::Dumper;
-#	print STDERR Dumper(\@_);
-#}
 
 
 1;

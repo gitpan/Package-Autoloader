@@ -1,3 +1,6 @@
 
+0.02	27 February 2010
+	- changed to an interface like in Package::Transporter
+
 0.01	24 February 2010
 	- initial release to implement IMP_ON_DEMAND in Package::Transporter
