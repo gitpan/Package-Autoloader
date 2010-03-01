@@ -1,4 +1,7 @@
 
+0.03	27 February 2010
+	- made convenience generator more obvious
+
 0.02	27 February 2010
 	- changed to an interface like in Package::Transporter
 

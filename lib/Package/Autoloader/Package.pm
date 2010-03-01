@@ -4,7 +4,7 @@ use warnings;
 use Carp qw();
 use Scalar::Util qw(blessed);
 
-#our $DEBUG = 0;
+our $CANDEF = 0;
 
 sub ATB_PKG_NAME() { 0 };
 sub ATB_VISIT_POINT() { 1 };
@@ -21,24 +21,29 @@ my $RULES = [
 	Package::Autoloader::Pre_Selection->new()
 ]; 
 
-
 my $autoload = q{
 	my $object = shift(@_);
 
-	our $AUTOLOAD;
 	our @ISA;
+	our $AUTOLOAD;
 	sub AUTOLOAD {
 		my $sub_ref = $object->autoload_generic(\@ISA, $AUTOLOAD, @_);
-		goto &$sub_ref if(defined($sub_ref));
-	}
-	sub can {
-		my $sub_ref = UNIVERSAL::can(@_);
-
-		defined($sub_ref)
-		? return($sub_ref)
-		: return($object->can_generic(\@ISA, @_));
+		goto &$sub_ref if (defined($sub_ref));
 	}
 };
+my $candef = q{
+	my $object = shift(@_);
+
+	our @ISA;
+	sub potentially_can {
+		return(defined(UNIVERSAL::can(@_))
+		|| defined($object->potentially_can(\@ISA, @_)));
+	}
+	sub potentially_defined {
+		return($object->potentially_defined(@_));
+	}
+};
+
 sub new {
 	my ($class, $pkg_name, $visit_point) = @_;
 
@@ -50,9 +55,15 @@ sub new {
 	Internals::SvREADONLY(@{$self}, 1);
 
 	$self->transport(\$autoload, $self);
-	Carp::confess($@) if($@);
+	$self->transport(\$candef, $self) if ($CANDEF);
+	Carp::confess($@) if ($@);
 
 	return($self);
+}
+
+sub potentially_candef {
+	$_[0]->transport(\$candef, $_[0]);
+	return;
 }
 
 sub set_visit_point {
@@ -60,9 +71,7 @@ sub set_visit_point {
 	return;
 }
 
-
 sub properties { return($_[0][ATB_PROPERTIES]); }
-
 
 sub transport {
 	my ($self, $code_ref) = (shift, shift);
@@ -79,7 +88,7 @@ sub transport {
 		print STDERR "Offending Code:\n", $$code_ref, "\n";
 		Carp::confess($@);
 	}
-        return($rv);
+	return($rv);
 }
 
 
@@ -87,20 +96,21 @@ my $register = sub {
 	my ($type, $self, $rule) = (shift, shift, shift);
 
 	my $rule_ref = ref($rule);
-	if($rule_ref eq '') {
-		$rule = eval qq{
-sub{
-	my(\$pkg, \$sub_name, \@args) = \@_;
-	return(sub{ $rule })
-}};
+	if ($rule_ref eq '') {
+		my $code = sprintf(q{
+sub($$;@) {
+	my($pkg, $sub_name, @args) = @_;
+	%s
+}}, $rule);
+		$rule = eval $code;
 		Carp::confess($@) if ($@);
 		$rule_ref = 'CODE';
 	}
-	if($rule_ref eq 'CODE') {
+	if ($rule_ref eq 'CODE') {
 		my $pkg_name = $self->[ATB_PKG_NAME];
-		$pkg_name .= '::' if($type == RULE_HIERACHY);
+		$pkg_name .= '::' if ($type == RULE_HIERACHY);
 		$rule = Package::Autoloader::Rule->new($rule, $pkg_name, @_);
-	} elsif($rule_ref eq 'ARRAY') {
+	} elsif ($rule_ref eq 'ARRAY') {
 		$rule = Package::Autoloader::Rule->new(@$rule);
 	}
 
@@ -116,25 +126,21 @@ my $std_sub = q{
 	sub %s { %s };
 	return(\&%s);
 };
-my $lookup = sub {
-	my ($type, $self, $pkg_list, $sub_name) = (shift, shift, shift, shift);
+sub run_generator {
+	my ($self, $generator, $sub_name) = (shift, shift, shift);
 
-	unless(exists($RULES->[$type])) {
-		Carp::confess("Type '$type' is not valid.\n");
-	}
-	my $generator = $RULES->[$type]->lookup_rule
-		($pkg_list, $self->[ATB_PKG_NAME], $sub_name, @_);
-	return(undef) unless(defined($generator));
+	return(undef) unless (defined($generator));
 
 	my $code = $generator->($self, $sub_name, @_);
-	if(ref($code) eq '') {
-		unless($code =~ m,^[\n\t\s]*sub[\n\t\s],) {
+	Carp::confess('No code.') unless (defined($code));
+	if (ref($code) eq '') {
+		unless ($code =~ m,^[\n\t\s]*sub[\n\t\s],) {
 			$code = sprintf($std_sub, $sub_name, $code, $sub_name);
 		}
 
 		$code = $self->transport(\$code);
 	}
-#	if($DEBUG) {
+#	if ($DEBUG) {
 #		push(@LOG, ['!', (defined($code) ? 'Yes' : 'No')]);
 #	}
 	return($code);
@@ -143,11 +149,11 @@ my $lookup = sub {
 
 sub package_hierarchy {
 	my $path = shift;
-	my $hierarchy = [];
+	my @hierarchy = [];
 	while($path =~ s,\w+(::)?$,,s) {
-		push(@$hierarchy, $path);
+		push(@hierarchy, $path);
 	}
-	return($hierarchy);
+	return(@hierarchy);
 }
 
 
@@ -155,62 +161,62 @@ sub autoload_generic {
 	my ($self, $isa, $sub_name) = (shift, shift, shift);
 
 	my $pkg_name = $self->[ATB_PKG_NAME];
-	if(($sub_name =~ s,^(.*)::,,) and ($pkg_name ne $1)) {
+	if (($sub_name =~ s,^(.*)::,,) and ($pkg_name ne $1)) {
 		Carp::confess("($pkg_name ne $1)");
 	}
-	return(undef) if($sub_name eq 'DESTROY');
-#	return(undef) if($sub_name eq 'AUTOLOAD');
-#	if($DEBUG) {
+	return(undef) if ($sub_name eq 'DESTROY');
+#	return(undef) if ($sub_name eq 'AUTOLOAD');
+#	if ($DEBUG) {
 #		push(@LOG, ['A', time, join('+', @$isa), $pkg_name, $sub_name, @_]);
 #	}
 
-	my $sub_ref = undef;
-	if(blessed($_[0])) { # maybe a method
-		my $search = [];
-		if($self->properties->is_search_self_isa) {
-			push(@$search, $pkg_name);
-		}
-		push(@$search, @$isa);
-		$sub_ref = $lookup->(RULE_LISTED, $self,
-			$search, $sub_name, @_); 
-	} else {
-		my $search = [$pkg_name];
-		if($self->properties->is_self_wild_hierarchy) {
-			push(@$search, "$pkg_name\::");
-		}
-		$sub_ref = $lookup->(RULE_HIERACHY, $self,
-			$search, $sub_name, @_); 
-		return($sub_ref) if(defined($sub_ref));
-		
-		$sub_ref = $lookup->(RULE_HIERACHY, $self, 
-			package_hierarchy($pkg_name), $sub_name, @_); 
-	}
+	my $generator = (blessed($_[0]))
+		? $self->isa_listed_generator($isa, $sub_name, @_)
+		: $self->hierarchy_generator($sub_name, @_);
 
-	unless(defined($sub_ref)) {
-		Carp::confess("Unable to create '$sub_name'.");
+	unless (defined($generator)) {
+		Carp::confess("Unable to create '$sub_name' (no generator found).");
+	}
+	my $sub_ref = $self->run_generator($generator, $sub_name, @_);
+	unless (defined($sub_ref)) {
+		Carp::confess("Unable to create '$sub_name' (generator failed).");
 	}
 	return($sub_ref);
 }
 
-
-sub can_generic {
-	my ($self, $isa, $obj, $sub_name) = @_;
-
-#	if($DEBUG) {
-#		push(@LOG, ['C', time, join('+', @{$_[0]}), $pkg_name, @_]);
-#	}
+sub isa_listed_generator {
+	my ($self, $isa, $sub_name) = (shift, shift, shift);
 
 	my $search = [];
-	if($self->properties->is_search_self_isa) {
-		push(@$search, ref($obj));
+	if ($self->properties->is_search_self_isa) {
+		push(@$search, $self->[ATB_PKG_NAME]);
 	}
 	push(@$search, @$isa);
-	my $sub_ref = $lookup->(RULE_LISTED, $self, $search, $sub_name); 
-	return($sub_ref);
+
+	return($RULES->[RULE_LISTED]->lookup_rule
+		($search, $self->[ATB_PKG_NAME], $sub_name, @_));
 }
 
+sub hierarchy_generator {
+	my ($self, $sub_name) = (shift, shift);
 
+	my $search = [$self->[ATB_PKG_NAME]];
+	if ($self->properties->is_self_wild_hierarchy) {
+		push(@$search, "$self->[ATB_PKG_NAME]\::");
+	}
+	push(@$search, package_hierarchy($self->[ATB_PKG_NAME]));
 
+	return($RULES->[RULE_HIERACHY]->lookup_rule
+		($search, $self->[ATB_PKG_NAME], $sub_name, @_));
+}
+
+sub potentially_can {
+	return(defined($_[0]->isa_listed_generator($_[1], $_[3], $_[2])));
+}
+
+sub potentially_defined {
+	return(defined($_[0]->hierarchy_generator($_[1])));
+}
 
 #sub dump_log {
 #	print STDERR join("\n", map(join("\t", @$_), @LOG));

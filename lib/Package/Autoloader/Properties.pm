@@ -20,7 +20,7 @@ sub new {
 
 	if (ref($value) eq 'ARRAY') {
 		$value = set_bits(1, $value);
-	} elsif(not defined($value)) {
+	} elsif (not defined($value)) {
 		$value = 1;
 	}
 	my $self = \$value;
@@ -56,7 +56,7 @@ sub has {
 	my ($self) = (shift);
 
 	foreach my $property (@_) {
-		if($property & 1) {
+		if ($property & 1) {
 			return(0) if ((${$_[0]} & $property) < 2);
 		} else {
 			return(0) if ((${$_[0]} & $property) != 0);
@@ -75,7 +75,7 @@ sub is_self_plain_hierarchy { return((${$_[0]} & HRC_SELF_PLAIN) == 0); }
 sub set_bits($$) {
 	my ($result, $properties) = @_;
 
-	return($result) if(! defined($properties));
+	return($result) if (! defined($properties));
 
 PROP:	foreach my $property (@$properties) {
 		my $value = ($property & 1);
@@ -107,7 +107,7 @@ sub _import {
 
 
 sub import {
-	return unless(defined($_[1]));
+	return unless (defined($_[1]));
 	return(_import($_[1], __PACKAGE__, \@EXPORT));
 }
 

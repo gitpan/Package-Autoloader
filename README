@@ -9,4 +9,3 @@ the fly. Once a missing subroutine is encountered in a package, Perl's
 autoload mechanism is triggered and groups of rules are checked for a
 matching generator. By default a missing subroutine is generated
 inside a package by an eval().
-

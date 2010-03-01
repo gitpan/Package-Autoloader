@@ -20,7 +20,7 @@ sub new {
 	my $pre_selection = [$pkg_match, ''];
 	$pre_selection->[0] =~ s/\w*[^\w\:].*$//s;
 
-	if($sub_match =~ m/^([a-z0-9]*_)/i) {
+	if ($sub_match =~ m/^([a-z0-9]*_)/i) {
 		$pre_selection->[1] = $1 || '';
 	}
 	$self->[ATB_PRE_SELECT] = $pre_selection;
@@ -42,11 +42,11 @@ sub create_matcher {
 	my ($self, $name, $separator) = (shift, shift, shift);
 
 	my $matcher;
-	if(length($name) == 0) {
+	if (length($name) == 0) {
 		$matcher = sub { 1 };
-	} elsif($name =~ m,[^\w\:],) {
+	} elsif ($name =~ m,[^\w\:],) {
 		$matcher = sub { $_[0] =~ m,$name,o };
-	} elsif((substr($name, -2, 2) eq $separator)
+	} elsif ((substr($name, -2, 2) eq $separator)
 	or(substr($name, -1, 1) eq $separator)) {
 		my $l = length($name);
 		$matcher = sub { ($name eq substr($_[0], 0, $l)) };
@@ -64,14 +64,14 @@ sub check {
 	return(undef) unless ($self->[ATB_PKG_MATCH]->($pkg_name));
 	return(undef) unless ($self->[ATB_SUB_MATCH]->($sub_name));
 
-	if(defined($self->[ATB_ARGC_MATCH])
+	if (defined($self->[ATB_ARGC_MATCH])
 	and ($self->[ATB_ARGC_MATCH] != scalar(@_))) {
 		return(undef);
 	}
 
 	my $args = $self->[ATB_ARGS_MATCH];
 	foreach my $i (0 .. $#$args) {
-		return(undef) unless(ref($_[$i]) eq $args->[$i]);
+		return(undef) unless (ref($_[$i]) eq $args->[$i]);
 	}
 
 	return($self->[ATB_GENERATOR]);

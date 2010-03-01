@@ -1,6 +1,7 @@
 Changes
 coding_style.txt
-examples/Synopsis.pl
+examples/potentially.pl
+examples/synopsis.pl
 INSTALL
 lib/Package/Autoloader.pm
 lib/Package/Autoloader.pod
