@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use Carp qw();
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 use Package::Autoloader::Package;
 my $PACKAGES = {};
@@ -36,7 +36,7 @@ sub import {
 	my $pkg = $obtain->((caller)[0], $visit_point);
 	foreach my $arg (@_) {
 		if (ref($arg) eq 'CODE') {
-			$arg->($pkg, $pkg->properties);
+			$arg->($pkg);
 			next;
 		}
 	}

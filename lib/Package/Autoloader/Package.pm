@@ -8,49 +8,50 @@ our $CANDEF = 0;
 
 sub ATB_PKG_NAME() { 0 };
 sub ATB_VISIT_POINT() { 1 };
-sub ATB_PROPERTIES() { 2 };
-
-sub RULE_LISTED() { 0 };
-sub RULE_HIERACHY() { 1 };
+sub ATB_SEARCH_PATH() { 2 };
 
 use Package::Autoloader::Rule;
-use Package::Autoloader::Properties;
 use Package::Autoloader::Pre_Selection;
-my $RULES = [
-	Package::Autoloader::Pre_Selection->new(),
-	Package::Autoloader::Pre_Selection->new()
-]; 
+my $RULES = Package::Autoloader::Pre_Selection->new(); 
 
 my $autoload = q{
 	my $object = shift(@_);
 
-	our @ISA;
 	our $AUTOLOAD;
 	sub AUTOLOAD {
-		my $sub_ref = $object->autoload_generic(\@ISA, $AUTOLOAD, @_);
+		my $sub_ref = $object->autoload_generic($AUTOLOAD, @_);
 		goto &$sub_ref if (defined($sub_ref));
 	}
 };
 my $candef = q{
 	my $object = shift(@_);
 
-	our @ISA;
 	sub potentially_can {
 		return(defined(UNIVERSAL::can(@_))
-		|| defined($object->potentially_can(\@ISA, @_)));
+		|| $object->potentially_can(@_));
 	}
 	sub potentially_defined {
 		return($object->potentially_defined(@_));
 	}
 };
 
+sub package_hierarchy {
+	my $name = shift;
+	my @hierarchy = ($name);
+	while($name =~ s,(::)\w+$,,s) {
+		push(@hierarchy, $name);
+	}
+	return(\@hierarchy);
+}
+
+
 sub new {
 	my ($class, $pkg_name, $visit_point) = @_;
 
 	my $self = [$pkg_name,
 		$visit_point,
-		Package::Autoloader::Properties->new()
-		];
+		package_hierarchy($pkg_name),
+	];
 	bless($self, $class);
 	Internals::SvREADONLY(@{$self}, 1);
 
@@ -71,8 +72,6 @@ sub set_visit_point {
 	return;
 }
 
-sub properties { return($_[0][ATB_PROPERTIES]); }
-
 sub transport {
 	my ($self, $code_ref) = (shift, shift);
 
@@ -92,8 +91,8 @@ sub transport {
 }
 
 
-my $register = sub {
-	my ($type, $self, $rule) = (shift, shift, shift);
+sub register_rule {
+	my ($self, $rule) = (shift, shift);
 
 	my $rule_ref = ref($rule);
 	if ($rule_ref eq '') {
@@ -108,19 +107,14 @@ sub($$;@) {
 	}
 	if ($rule_ref eq 'CODE') {
 		my $pkg_name = $self->[ATB_PKG_NAME];
-		$pkg_name .= '::' if ($type == RULE_HIERACHY);
 		$rule = Package::Autoloader::Rule->new($rule, $pkg_name, @_);
 	} elsif ($rule_ref eq 'ARRAY') {
 		$rule = Package::Autoloader::Rule->new(@$rule);
 	}
 
-	$RULES->[$type]->register_rule($rule, $rule->pre_select);
+	$RULES->register_rule($rule, $rule->pre_select);
 	return;
 };
-
-sub isa_listed_rule { return($register->(RULE_LISTED, @_)); };
-sub package_hierarchy_rule { return($register->(RULE_HIERACHY, @_)); };
-
 
 my $std_sub = q{
 	sub %s { %s };
@@ -147,18 +141,8 @@ sub run_generator {
 };
 
 
-sub package_hierarchy {
-	my $path = shift;
-	my @hierarchy = [];
-	while($path =~ s,\w+(::)?$,,s) {
-		push(@hierarchy, $path);
-	}
-	return(@hierarchy);
-}
-
-
 sub autoload_generic {
-	my ($self, $isa, $sub_name) = (shift, shift, shift);
+	my ($self, $sub_name) = (shift, shift);
 
 	my $pkg_name = $self->[ATB_PKG_NAME];
 	if (($sub_name =~ s,^(.*)::,,) and ($pkg_name ne $1)) {
@@ -167,12 +151,10 @@ sub autoload_generic {
 	return(undef) if ($sub_name eq 'DESTROY');
 #	return(undef) if ($sub_name eq 'AUTOLOAD');
 #	if ($DEBUG) {
-#		push(@LOG, ['A', time, join('+', @$isa), $pkg_name, $sub_name, @_]);
+#		push(@LOG, ['A', time, $pkg_name, $sub_name, @_]);
 #	}
 
-	my $generator = (blessed($_[0]))
-		? $self->isa_listed_generator($isa, $sub_name, @_)
-		: $self->hierarchy_generator($sub_name, @_);
+	my $generator = $self->has_generator($sub_name, @_);
 
 	unless (defined($generator)) {
 		Carp::confess("Unable to create '$sub_name' (no generator found).");
@@ -184,38 +166,22 @@ sub autoload_generic {
 	return($sub_ref);
 }
 
-sub isa_listed_generator {
-	my ($self, $isa, $sub_name) = (shift, shift, shift);
-
-	my $search = [];
-	if ($self->properties->is_search_self_isa) {
-		push(@$search, $self->[ATB_PKG_NAME]);
-	}
-	push(@$search, @$isa);
-
-	return($RULES->[RULE_LISTED]->lookup_rule
-		($search, $self->[ATB_PKG_NAME], $sub_name, @_));
-}
-
-sub hierarchy_generator {
+sub has_generator {
 	my ($self, $sub_name) = (shift, shift);
 
-	my $search = [$self->[ATB_PKG_NAME]];
-	if ($self->properties->is_self_wild_hierarchy) {
-		push(@$search, "$self->[ATB_PKG_NAME]\::");
-	}
-	push(@$search, package_hierarchy($self->[ATB_PKG_NAME]));
-
-	return($RULES->[RULE_HIERACHY]->lookup_rule
-		($search, $self->[ATB_PKG_NAME], $sub_name, @_));
+	return(
+		$RULES->lookup_rule(
+			$self->[ATB_SEARCH_PATH],
+			$self->[ATB_PKG_NAME],
+			$sub_name, @_));
 }
 
 sub potentially_can {
-	return(defined($_[0]->isa_listed_generator($_[1], $_[3], $_[2])));
+	return(defined($_[0]->has_generator($_[2], $_[1])));
 }
 
 sub potentially_defined {
-	return(defined($_[0]->hierarchy_generator($_[1])));
+	return(defined($_[0]->has_generator($_[1])));
 }
 
 #sub dump_log {

@@ -6,8 +6,7 @@ use Package::Autoloader sub{eval shift}, sub {
 		my $greet = substr($sub_name, 6);
  		return(qq{return('Hello $greet\n')});
 	};
-	$_[0]->package_hierarchy_rule($generator, 'greet_');
-	$_[0]->isa_listed_rule($generator, 'saluer_');
+	$_[0]->register_rule($generator, 'greet_');
 };
 
 print greet_world();
@@ -32,6 +31,4 @@ use Package::Autoloader sub{eval shift}, sub{
 my $obj = bless( \(my $o = 0), 'Synopsis::Desc2');
 print STDOUT ($obj->can('greet_monde') ? 'Can' : 'Cannot'), "\n";
 print STDOUT ($obj->potentially_can('greet_monde') ? 'Can' : 'Cannot'), "\n";
-#print greet_monde();
-#print $obj->greet_monde();
-print $obj->saluer_monde();
+print $obj->greet_monde();

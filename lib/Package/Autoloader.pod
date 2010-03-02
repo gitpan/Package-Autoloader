@@ -15,8 +15,7 @@ The following basic example demonstrates how subroutine generation is done and h
 			my $greet = substr($sub_name, 6); #magic
 	 		return(qq{return('Hello $greet\n')});
 		};
-		$_[0]->package_hierarchy_rule($generator, 'greet_');
-		$_[0]->isa_listed_rule($generator, 'saluer_');
+		$_[0]->register_rule($generator, 'greet_');
 	};
 	
 	print greet_world();
@@ -33,8 +32,8 @@ The following basic example demonstrates how subroutine generation is done and h
 	use Package::Autoloader sub{eval shift};
 	
 	my $obj = bless( \(my $o = 0), 'Synopsis::Desc2');
-	print STDOUT ($obj->can('saluer_monde') ? 'Can' : 'Cannot'), "\n";
-	print $obj->saluer_monde();
+	print STDOUT ($obj->can('greet__monde') ? 'Can' : 'Cannot'), "\n";
+	print $obj->greet_monde();
 
 
 The dynamically generated subroutines greet_world, greet_mundo, and salut_monde
@@ -58,6 +57,8 @@ why the installation of Package::Autoloader fails intentionally.
 Package::Autoloader supplies packages with subroutine definitions on the fly. It requires individual activation with the sub-eval-shift like shown in the synopsis. This module complements L<Package::Transporter>.
 
 Once a missing subroutine is encountered, Perl's autoload mechanism is triggered and groups of rules are checked for a matching generator. If one is found, it should bring the requested subroutine into existence.
+
+A hierarchical search for a matching rule through the package name is performed. For the package A::B::C the hierarchy is A::B::C, A::B, A, and ''. Any rule found on the way to the top is checked.
 
 From a practical point of view, Package::Autoloader enables you to specify autoloading in terms of modular rules instead of a monolithic AUTOLOAD subroutine. The rules are normally activated during compile time.
 
@@ -120,11 +121,9 @@ In order to minimize the number of rules to evaluate, they are organized by purp
 
 This detail only needs to be considered when you write your own rules class. See the pre_select attribute in the standard class.
 
-To widen the scope of a hierarchy search rule, shorten the names. Ex:: applies to all package names starting with Ex:: (no wildcard required), Ex::(A|B|C) is recognized as a regular expression and an empty package name applies to all packages.
+To widen the scope of a hierarchy search rule, shorten the names. Ex applies to all package names starting with Ex (full package name, but no wildcard required), Ex::(A|B|C) is recognized as a regular expression and an empty package name applies to all packages.
 
-It is a common copy&paste pitfall to specify Ex:: as a isa search rule. The pre-selection phase won't ever expose the rule. Searches along @ISA are done literally only.
-
-Similarly for subroutine names (any kind of search). Specify no_ to match a name starting with no_ (no wildcard required), no_(parking|money) is recognized as a regular expression and an empty subroutine name applies to all subroutines.
+Similarly for subroutine names (any kind of search). Specify no_ to match a name starting with no_ (partial subroutine name ending in underscore but no wildcard required), no_(parking|money) is recognized as a regular expression and an empty subroutine name applies to all subroutines.
 
 
 =head2 Generators
@@ -168,13 +167,9 @@ The following methods belong to the  public interface of Package::Autoloader.
 
 Activates the two subroutines potentially_can and potentially_defined for the current package.
 
-=item B<isa_listed_rule>
+=item B<register_rule>
 
-This rule is only considered while walking through the package names in @ISA, which is maintained through 'use parent' (formerly 'use base').
-
-=item B<package_hierarchy_rule>
-
-This rule is only considered while walking through the hierarchy of the package name. For the package name A::B::C the hierarchy is A::B, A.
+Trigger the convenience function as described above.
 
 =back
 

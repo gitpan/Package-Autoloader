@@ -10,8 +10,7 @@ use Package::Autoloader sub{eval shift}, sub {
 		$i += 7;
 		return(qq{sprintf('$i%s', '$_[1]')});
 	};
-	$_[0]->package_hierarchy_rule($generator, 'tfrv1');
-	$_[0]->isa_listed_rule($generator, 'tfrv2');
+	$_[0]->register_rule($generator, 'tfrv1');
 };
 
 
@@ -38,7 +37,7 @@ use Package::Autoloader sub{eval shift}, sub{
 
 my $obj = bless( \(my $o = 0), 'Basic_Test::P3');
 ok(!$obj->can('tfrv2'), 'Can (not) in subclass package.');
-ok($obj->potentially_can('tfrv2'), 'Potential Can in subclass package.');
-ok(($obj->tfrv2() eq '21tfrv2'), 'Available in subclass package.');
+ok(!$obj->potentially_can('tfrv2'), 'Potential Can in subclass package.');
+ok(($obj->tfrv1() eq '7tfrv1'), 'Inherited in subclass package.');
 
 exit(0);

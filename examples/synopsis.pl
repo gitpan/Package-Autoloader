@@ -6,8 +6,7 @@ use Package::Autoloader sub{eval shift}, sub {
 		my $greet = substr($sub_name, 6); #magic
  		return(qq{return('Hello $greet\n')});
 	};
-	$_[0]->package_hierarchy_rule($generator, 'greet_');
-	$_[0]->isa_listed_rule($generator, 'saluer_');
+	$_[0]->register_rule($generator, 'greet_');
 };
 
 print greet_world();
@@ -24,5 +23,5 @@ our @ISA = ('Synopsis');
 use Package::Autoloader sub{eval shift};
 
 my $obj = bless( \(my $o = 0), 'Synopsis::Desc2');
-print STDOUT ($obj->can('saluer_monde') ? 'Can' : 'Cannot'), "\n";
-print $obj->saluer_monde();
+print STDOUT ($obj->can('greet_monde') ? 'Can' : 'Cannot'), "\n";
+print $obj->greet_monde();
