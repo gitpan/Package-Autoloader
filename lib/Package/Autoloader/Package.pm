@@ -38,7 +38,7 @@ my $candef = q{
 sub package_hierarchy {
 	my $name = shift;
 	my @hierarchy = ($name);
-	while($name =~ s,(::)\w+$,,s) {
+	while($name =~ s,\w+(::)?$,,s) {
 		push(@hierarchy, $name);
 	}
 	return(\@hierarchy);
@@ -90,11 +90,11 @@ sub transport {
 	return($rv);
 }
 
-
 sub register_rule {
 	my ($self, $rule) = (shift, shift);
 
 	my $rule_ref = ref($rule);
+	my @rules = ();
 	if ($rule_ref eq '') {
 		my $code = sprintf(q{
 sub($$;@) {
@@ -106,13 +106,32 @@ sub($$;@) {
 		$rule_ref = 'CODE';
 	}
 	if ($rule_ref eq 'CODE') {
-		my $pkg_name = $self->[ATB_PKG_NAME];
-		$rule = Package::Autoloader::Rule->new($rule, $pkg_name, @_);
+		my @pkg_names = ($self->[ATB_PKG_NAME]);
+		my $wildcard = shift;
+		if ($wildcard eq '+') {
+		} elsif ($wildcard eq '+::*') {
+			push(@pkg_names, $pkg_names[0]);
+			$pkg_names[1] .= '::';
+		} elsif ($wildcard eq '::*') {
+			$pkg_names[0] .= '::';
+		} elsif ($wildcard eq '*') {
+			$pkg_names[0] = '';
+		} else {
+			Carp::confess("Don't know what to do with wildcard '$wildcard'.\n");
+		}
+		foreach my $pkg_name (@pkg_names) {
+			push(@rules,
+				Package::Autoloader::Rule->new($rule, $pkg_name, @_));
+		}
 	} elsif ($rule_ref eq 'ARRAY') {
-		$rule = Package::Autoloader::Rule->new(@$rule);
+		push(@rules, Package::Autoloader::Rule->new(@$rule));
+	} else {
+		push(@rules, $rule);
 	}
 
-	$RULES->register_rule($rule, $rule->pre_select);
+	foreach my $rule (@rules) {
+		$RULES->register_rule($rule, $rule->pre_select);
+	}
 	return;
 };
 
@@ -134,12 +153,8 @@ sub run_generator {
 
 		$code = $self->transport(\$code);
 	}
-#	if ($DEBUG) {
-#		push(@LOG, ['!', (defined($code) ? 'Yes' : 'No')]);
-#	}
 	return($code);
 };
-
 
 sub autoload_generic {
 	my ($self, $sub_name) = (shift, shift);
@@ -150,43 +165,47 @@ sub autoload_generic {
 	}
 	return(undef) if ($sub_name eq 'DESTROY');
 #	return(undef) if ($sub_name eq 'AUTOLOAD');
-#	if ($DEBUG) {
-#		push(@LOG, ['A', time, $pkg_name, $sub_name, @_]);
-#	}
 
-	my $generator = $self->has_generator($sub_name, @_);
+	my $generator;
+	if (blessed($_[0])) {
+		my $ISA = mro::get_linear_isa($self->[ATB_PKG_NAME]);
+		($self, $generator) = Package::Autoloader::find_generator($ISA, $sub_name, @_);
+	} else {
+		$generator = $self->find_generator($sub_name, @_);
+	}
 
 	unless (defined($generator)) {
-		Carp::confess("Unable to create '$sub_name' (no generator found).");
+		Carp::confess("Unable to create '$sub_name' for $pkg_name (no generator found).");
 	}
 	my $sub_ref = $self->run_generator($generator, $sub_name, @_);
 	unless (defined($sub_ref)) {
-		Carp::confess("Unable to create '$sub_name' (generator failed).");
+		Carp::confess("Unable to create '$sub_name' for $pkg_name (generator failed).");
 	}
 	return($sub_ref);
 }
 
-sub has_generator {
-	my ($self, $sub_name) = (shift, shift);
-
-	return(
-		$RULES->lookup_rule(
-			$self->[ATB_SEARCH_PATH],
-			$self->[ATB_PKG_NAME],
-			$sub_name, @_));
+sub find_generator {
+	return($RULES->lookup_rule(
+		$_[0][ATB_SEARCH_PATH],
+		$_[0][ATB_PKG_NAME],
+		$_[1], @_));
 }
 
 sub potentially_can {
-	return(defined($_[0]->has_generator($_[2], $_[1])));
+	my ($self) = (shift);
+
+	my $ISA = mro::get_linear_isa($self->[ATB_PKG_NAME]);
+	my ($pkg, $generator) = Package::Autoloader::find_generator($ISA, $_[1], $_[0]);
+	return(defined($generator));
 }
 
 sub potentially_defined {
-	return(defined($_[0]->has_generator($_[1])));
+	return(defined(shift->find_generator(@_)));
 }
 
-#sub dump_log {
-#	print STDERR join("\n", map(join("\t", @$_), @LOG));
-#	print STDERR "\n";
+#sub DESTROY {
+#	use Data::Dumper;
+#	print STDERR Dumper($_[0]);
 #}
 
 1;

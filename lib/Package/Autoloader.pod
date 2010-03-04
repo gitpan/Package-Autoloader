@@ -2,70 +2,95 @@
 
 =head1 NAME
 
-Package::Autoloader - modular 'AUTOLOAD' and 'can' for packages
+Package::Autoloader - modular wrapper for 'AUTOLOAD' with 'can' and 'defined'
 
 
 =head1 SYNOPSIS
 
 The following basic example demonstrates how subroutine generation is done and how packages can facilitate the potential.
 
+	use strict;
+	
 	package Synopsis;
 	use Package::Autoloader sub{eval shift}, sub {
 		my $generator = q{
 			my $greet = substr($sub_name, 6); #magic
-	 		return(qq{return('Hello $greet\n')});
+	 		return(qq{print 'Hello $greet\n'});
 		};
-		$_[0]->register_rule($generator, 'greet_');
+		$_[0]->register_rule($generator, '::*', 'greet_');
+		$_[0]->register_rule($generator, '+', 'salut_');
 	};
-	
-	print greet_world();
-	
+
 	
 	package Synopsis::Desc1;
 	use Package::Autoloader sub{eval shift};
 	
-	print greet_mundo();
+	greet_mundo();
+
 	
-	
-	package Synopsis::Desc2;
+	package sisponyS::Desc2;
 	our @ISA = ('Synopsis');
 	use Package::Autoloader sub{eval shift};
 	
-	my $obj = bless( \(my $o = 0), 'Synopsis::Desc2');
-	print STDOUT ($obj->can('greet__monde') ? 'Can' : 'Cannot'), "\n";
-	print $obj->greet_monde();
+	my $obj = bless( \(my $o = 0), 'sisponyS::Desc2');
+	print STDOUT ($obj->can('salut_monde') ? 'Can' : 'Cannot'), "\n";
+	$obj->salut_monde();
 
 
-The dynamically generated subroutines greet_world, greet_mundo, and salut_monde
-all print Hello plus the second part of their name to the screen. The
-example makes maximum use of convenience features.
+The dynamically generated subroutines greet_mundo and greet_monde print Hello plus the second part of their name to the screen. The example makes maximum use of convenience features.
 
-The package Synopsis::Desc2 should remind you that can, defined and exists are not aware of AUTOLOAD. It is too monolithic and unstructured. However, there are two subroutines potentially_can, and potentially_defined, which are aware of Package::Autoloader. Details below.
+The package sisponyS::Desc2 should remind you that 'can', 'defined' and 'exists' are not aware of AUTOLOAD. However, there are two subroutines potentially_can, and potentially_defined, which are aware of Package::Autoloader. Details below.
 
 
 =head1 WARNING
 
-This is an early public release of Package::Autoloader. The module
-hasn't been thoroughly tested, making the probability of fatal bugs
-quiet high. It is not the goal of the release to provide a well-tested
-module, but to document the current development. That are the reasons
-why the installation of Package::Autoloader fails intentionally.
+This is an experimental module. It hasn't been thoroughly tested, making the probability of fatal bugs quiet high. The goal of the release is to document the current development.
 
 
 =head1 DESCRIPTION
 
 Package::Autoloader supplies packages with subroutine definitions on the fly. It requires individual activation with the sub-eval-shift like shown in the synopsis. This module complements L<Package::Transporter>.
 
-Once a missing subroutine is encountered, Perl's autoload mechanism is triggered and groups of rules are checked for a matching generator. If one is found, it should bring the requested subroutine into existence.
+Once a missing subroutine is encountered, Perl's autoload mechanism forwards the request to an autoloader object and a tree of rules is checked for a matching generator. If one is found, the generator should bring the requested subroutine into existence.
 
-A hierarchical search for a matching rule through the package name is performed. For the package A::B::C the hierarchy is A::B::C, A::B, A, and ''. Any rule found on the way to the top is checked.
+Rules are searched hierarchically through he components of the package name. For the package A::B::C the name hierarchy is A::B::C, A::B::, A::, and ''. Any rule found on the way to the top is checked and if the check is successful, the search stops.
 
 From a practical point of view, Package::Autoloader enables you to specify autoloading in terms of modular rules instead of a monolithic AUTOLOAD subroutine. The rules are normally activated during compile time.
+
+The following lines, added to the synopsis, should print the words No, No, Yes to the screen. The method salut_monde springs into existence as a subroutine in a parent class. The reverse name sisponyS should stress that the search goes along @ISA (using whatever MRO is in effect).
+
+	sub print_yn($) { print STDOUT (($_[0]) ? 'Yes' : 'No'), "\n"; }
+	print_yn(defined(&sisponyS::Desc2::salut_monde));
+	print_yn(defined(&Synopsis::Desc1::salut_monde));
+	print_yn(defined(&Synopsis::salut_monde));
+
+
+=head2 Convenience Functions
+
+The method register_rule has a convenience mode, where it accepts three-argument rule shortcuts. The first argument is a generator, the second is a wildcard and the third is the matching subroutine pattern.
+
+Minimally the generator is the textual body of a subroutine, which should at least generate textual bodies of other subroutines.
+
+The wildcard is one of the following four symbols:
+
+=over 8
+
+=item a single plus '+' means the rule applies to the package itself only, although the generated subroutines follow inheritance;
+
+=item a double colon followed by an asterisk '::*' means the rule applies to package names deeper in the hierarchy, so that the rules defined in Synopis applies to Synopsis::Desc1;
+
+=item combination of the above symbols '+::*' is a combination of the functions; and
+
+=item a single asterisk '*' means the rule applies globally other packages, including itself;
+
+=back
+
+The third argument can be either a single subroutine name, a partial name ending in underscore or a textual regular expression (not the result of qr//).
 
 
 =head2 Subroutine Potential
 
-Whether a package has potential of a subroutine can be tested with the utility functions potentially_(can|defined). They have to be activated. Either globally by setting Package::Autoloader::Package::CANDEF=1 or individually by using the following technique:
+Whether a package has potential for a subroutine can be tested with the utility functions potentially_(can|defined). They have to be explicitely activated. Either globally by setting Package::Autoloader::Package::CANDEF=1 or individually by using the following technique:
 
 	package Synopsis::Desc1;
 	use Package::Autoloader sub{eval shift}, sub{
@@ -74,7 +99,12 @@ Whether a package has potential of a subroutine can be tested with the utility f
 
 The dynamic functions take the name of a subroutine (meaning a string) as an argument and return true or false. That makes their use consistent, but different from from their static counterparts 'can' and 'defined'.
 
-There is no potentially_exists, because the rule system in Package::Autoloader doesn't distinguish between defined and exists, because AUTOLOAD doesn't tell whether a prototype is requested or a full subroutine definition. 'exists' considers even prototypes and names treated with undef (crazy, eh?), while 'defined' only considers (fully) defined subroutines. You probably want to use the combination of can and defined for most practical purposes.
+	if(potentially_defined('turbo_mode')) ...
+	if($obj->potentially_can('turbo_mode')) ...
+
+potentially_can does not return a subroutine reference, because it is about potential and thus it does not do autovivification. Beside that, potentially_can is potentially expensive. Remember Perl supports multiple inheritance, so that a search for rules has to go through the tree of parent classes (linearised though) and through the name hierarchy of each class. A lot of each to ensure that the method name in question springs into existence in the right defining parent class.
+
+There is no potentially_exists, because the rule system in Package::Autoloader doesn't distinguish between defined and exists, because AUTOLOAD doesn't tell whether a prototype is requested or a full subroutine definition. It would be useful to automatically generate prototypes, which would solve the problem described in in the BUGS section below. Background: 'exists' considers even prototypes and names treated with undef (crazy, eh?), while 'defined' only considers (fully) defined subroutines. You probably want to use the combination of can and defined for most practical purposes.
 
 
 =head2 Visit Points
@@ -92,7 +122,7 @@ The two rules from the synopsis conveniently hide the full interface for rules. 
 
 =over 8
 
-=item * by giving B<a generator and a subroutine name> - a minimal rule object will be created with the own package name for the search default;
+=item * by giving B<a generator, a wildcard and a subroutine name> - a minimal rule object will be created;
 
 =item * by giving B<an array holding parameters for new()> - a rule object will be instantiated accordingly;
 
@@ -121,7 +151,7 @@ In order to minimize the number of rules to evaluate, they are organized by purp
 
 This detail only needs to be considered when you write your own rules class. See the pre_select attribute in the standard class.
 
-To widen the scope of a hierarchy search rule, shorten the names. Ex applies to all package names starting with Ex (full package name, but no wildcard required), Ex::(A|B|C) is recognized as a regular expression and an empty package name applies to all packages.
+To widen the scope of a hierarchy search rule, shorten the names. Ex:: applies to all package names starting with Ex:: (no wildcard required), Ex::(A|B|C) is recognized as a regular expression and an empty package name applies to all packages.
 
 Similarly for subroutine names (any kind of search). Specify no_ to match a name starting with no_ (partial subroutine name ending in underscore but no wildcard required), no_(parking|money) is recognized as a regular expression and an empty subroutine name applies to all subroutines.
 
@@ -134,7 +164,7 @@ A generator is an anonymous subroutine, which is called with all information its
 
 =item * B<a string not looking like a complete subroutine definition> - surroundings are added automatically.
 
-=item * B<a string starting with 'sub '> - taken as a complete definition and submitted to the eval(). Note that the string should include a return statement for a reference to the subroutine after the definition. 
+=item * B<a string starting with 'sub '> - taken as a complete definition of the missing subroutine and submitted to the eval(). Note that the string should include a return statement for a reference to the subroutine after the definition. 
 
 =item * B<a CODE reference> - assuming the generator already did all necessary steps, the reference is passed to the upper layers, where it will eventually hit the goto &$reference in the autoloader.
 
@@ -148,8 +178,7 @@ There is no general-purpose generator shipped with Package::Autoloader, because 
 A manual crafted generator looks like the following:
 
 	my $generator = sub { 
-		my ($pkg, $sub_name, $argc) = 
-			(shift, shift, shift);
+		my ($pkg, $sub_name, $argc) = (shift, shift, shift);
 
 		#... do something to create the $sub_ref
 
@@ -159,13 +188,17 @@ A manual crafted generator looks like the following:
 
 =head1 PUBLIC INTERFACE REFERENCE
 
-The following methods belong to the  public interface of Package::Autoloader.
+The following methods belong to the  public interface of Package::Autoloader::Package.
 
 =over 8
 
 =item B<potentially_candef>
 
 Activates the two subroutines potentially_can and potentially_defined for the current package.
+
+=item B<$Package::Autoloader::Package::CANDEF>
+
+A package global to activate potentially_candef for all pacakges. Please note you have to set it in a BEGIN block.
 
 =item B<register_rule>
 
@@ -174,7 +207,7 @@ Trigger the convenience function as described above.
 =back
 
 
-=head1 BUGS
+=head1 BUGS AND LIMITATIONS
 
 Please report unknown bugs via the "CPAN Request Tracker", which is the default way of managing such reports. If that is too much of hassle, then just drop me a note to the e-mail address below.
 
@@ -182,6 +215,14 @@ http://rt.cpan.org/NoAuth/Bugs.html?Dist=Package-Autoloader
 
 This is an early public release. Also see the Todo file.
 
+=head2 Prototypes
+
+Imagine the following situation, where subroutine A calls B and vice versa (so that you can't simply change the order):
+
+	sub A($) { ... B(2, 8); ... }
+	sub B($) { ... A(7); ... }
+
+Perl should complain that it can't verify the arguments for the call to B(2), because B is not defined, yet. The solution are subroutine prototypes (forward declarations). AUTOLOAD does not indicate whether a prototype definition is sufficient, so you can only solve the above situation by manually supplying prototypes, which renders AUTOLOAD nearly useless.
 
 =head1 AUTHOR
 
