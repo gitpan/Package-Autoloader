@@ -5,6 +5,27 @@ use Carp qw();
 
 sub new { bless({}, __PACKAGE__); }
 
+sub register_rules {
+	my ($self, $rule, $pkg_name, $sub_name) = @_;
+
+	my ($pkg_names, $sub_names);
+	if(ref($pkg_name) eq 'ARRAY') {
+		$pkg_names = $pkg_name
+	} else {
+		$pkg_names = [$pkg_name];
+	}
+	if(ref($sub_name) eq 'ARRAY') {
+		$sub_names = $sub_name
+	} else {
+		$sub_names = [$sub_name];
+	}
+	foreach my $pkg_name (@$pkg_names) {
+		foreach my $sub_name (@$sub_names) {
+			$self->register_rule($rule, $pkg_name, $sub_name);
+		}
+	}
+}
+
 sub register_rule {
 	my ($self, $rule, $pkg_name, $sub_name) = @_;
 

@@ -4,7 +4,7 @@ use warnings;
 use Carp qw();
 use Scalar::Util qw(blessed);
 
-our $CANDEF = 0;
+our $CANDEFINED = 0;
 
 sub ATB_PKG_NAME() { 0 };
 sub ATB_VISIT_POINT() { 1 };
@@ -23,16 +23,21 @@ my $autoload = q{
 		goto &$sub_ref if (defined($sub_ref));
 	}
 };
-my $candef = q{
+my $can = q{
 	my $object = shift(@_);
-
 	sub potentially_can {
 		return(defined(UNIVERSAL::can(@_))
 		|| $object->potentially_can(@_));
 	}
+	return(\&potentially_can);
+};
+
+my $defined = q{
+	my $object = shift(@_);
 	sub potentially_defined {
 		return($object->potentially_defined(@_));
 	}
+	return(\&potentially_defined);
 };
 
 sub package_hierarchy {
@@ -56,14 +61,18 @@ sub new {
 	Internals::SvREADONLY(@{$self}, 1);
 
 	$self->transport(\$autoload, $self);
-	$self->transport(\$candef, $self) if ($CANDEF);
+	Carp::confess($@) if ($@);
+	$self->potentially_candefined if ($CANDEFINED);
 	Carp::confess($@) if ($@);
 
 	return($self);
 }
 
-sub potentially_candef {
-	$_[0]->transport(\$candef, $_[0]);
+sub name { return($_[0][ATB_PKG_NAME]); };
+
+sub potentially_candefined {
+	$_[0]->transport(\$can, $_[0]);
+	$_[0]->transport(\$defined, $_[0]);
 	return;
 }
 
@@ -81,7 +90,6 @@ sub transport {
 	unless (ref($code_ref) eq 'SCALAR') {
 		Carp::confess("Code not a scalar ref.\n");
 	}
-
 	my $rv = $self->[ATB_VISIT_POINT]->($$code_ref, @_);
 	if ($@) {
 		print STDERR "Offending Code:\n", $$code_ref, "\n";
@@ -94,7 +102,6 @@ sub register_rule {
 	my ($self, $rule) = (shift, shift);
 
 	my $rule_ref = ref($rule);
-	my @rules = ();
 	if ($rule_ref eq '') {
 		my $code = sprintf(q{
 sub($$;@) {
@@ -119,21 +126,34 @@ sub($$;@) {
 		} else {
 			Carp::confess("Don't know what to do with wildcard '$wildcard'.\n");
 		}
-		foreach my $pkg_name (@pkg_names) {
-			push(@rules,
-				Package::Autoloader::Rule->new($rule, $pkg_name, @_));
-		}
+		my $rule = Package::Autoloader::Rule->new(
+			$rule, \@pkg_names, @_);
+		$RULES->register_rules($rule, $rule->pre_select);
 	} elsif ($rule_ref eq 'ARRAY') {
-		push(@rules, Package::Autoloader::Rule->new(@$rule));
+		my $rule = Package::Autoloader::Rule->new(@$rule);
+		$RULES->register_rule($rule, $rule->pre_select);
 	} else {
-		push(@rules, $rule);
-	}
-
-	foreach my $rule (@rules) {
 		$RULES->register_rule($rule, $rule->pre_select);
 	}
+
 	return;
 };
+
+sub export {
+	my ($self) = (shift);
+	my $generator = sub {
+		my ($pkg, $sub_name, $argc) = (shift, shift, shift);
+		my $sub_text = sprintf(q{
+my $sub_ref = \&%s::%s;
+*%s = $sub_ref;
+return($sub_ref);
+		}, $self->name, $sub_name, $sub_name);
+
+		my $sub_ref = $pkg->transport(\$sub_text);
+ 		return($sub_ref);
+	};
+	$self->register_rule($generator, @_);
+}
 
 my $std_sub = q{
 	sub %s { %s };
@@ -165,6 +185,12 @@ sub autoload_generic {
 	}
 	return(undef) if ($sub_name eq 'DESTROY');
 #	return(undef) if ($sub_name eq 'AUTOLOAD');
+	if ($sub_name eq 'potentially_can') {
+		return($self->transport(\$can, $self));
+	}
+	if ($sub_name eq 'potentially_defined') {
+		return($self->transport(\$defined, $self));
+	}
 
 	my $generator;
 	if (blessed($_[0])) {

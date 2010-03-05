@@ -2,23 +2,20 @@
 
 =head1 NAME
 
-Package::Autoloader - modular wrapper for 'AUTOLOAD' with 'can' and 'defined'
+Package::Autoloader - modular wrapper for 'AUTOLOAD' with dynamic export
 
 
 =head1 SYNOPSIS
 
 The following basic example demonstrates how subroutine generation is done and how packages can facilitate the potential.
 
-	use strict;
-	
 	package Synopsis;
 	use Package::Autoloader sub{eval shift}, sub {
 		my $generator = q{
 			my $greet = substr($sub_name, 6); #magic
 	 		return(qq{print 'Hello $greet\n'});
 		};
-		$_[0]->register_rule($generator, '::*', 'greet_');
-		$_[0]->register_rule($generator, '+', 'salut_');
+		$_[0]->register_rule($generator, '+::*', 'greet_');
 	};
 
 	
@@ -33,9 +30,11 @@ The following basic example demonstrates how subroutine generation is done and h
 	use Package::Autoloader sub{eval shift};
 	
 	my $obj = bless( \(my $o = 0), 'sisponyS::Desc2');
-	print STDOUT ($obj->can('salut_monde') ? 'Can' : 'Cannot'), "\n";
-	$obj->salut_monde();
+	$obj->greet_monde();
 
+
+All examples in this document can be found as separate perl files in
+the examples directory.
 
 The dynamically generated subroutines greet_mundo and greet_monde print Hello plus the second part of their name to the screen. The example makes maximum use of convenience features.
 
@@ -57,12 +56,12 @@ Rules are searched hierarchically through he components of the package name. For
 
 From a practical point of view, Package::Autoloader enables you to specify autoloading in terms of modular rules instead of a monolithic AUTOLOAD subroutine. The rules are normally activated during compile time.
 
-The following lines, added to the synopsis, should print the words No, No, Yes to the screen. The method salut_monde springs into existence as a subroutine in a parent class. The reverse name sisponyS should stress that the search goes along @ISA (using whatever MRO is in effect).
+The following lines, added to the synopsis, should print the words No, No, Yes to the screen. The method greet_monde springs into existence as a subroutine in a parent class. The reverse name sisponyS should stress that the search goes along @ISA (using whatever MRO is in effect).
 
 	sub print_yn($) { print STDOUT (($_[0]) ? 'Yes' : 'No'), "\n"; }
-	print_yn(defined(&sisponyS::Desc2::salut_monde));
-	print_yn(defined(&Synopsis::Desc1::salut_monde));
-	print_yn(defined(&Synopsis::salut_monde));
+	print_yn(defined(&sisponyS::Desc2::greet_monde));
+	print_yn(defined(&Synopsis::Desc1::greet_monde));
+	print_yn(defined(&Synopsis::greet_monde));
 
 
 =head2 Convenience Functions
@@ -85,16 +84,16 @@ The wildcard is one of the following four symbols:
 
 =back
 
-The third argument can be either a single subroutine name, a partial name ending in underscore or a textual regular expression (not the result of qr//).
+The third argument can be either a single subroutine name, an array reference of full names, a partial name ending in underscore or a textual regular expression (not the result of qr//).
 
 
 =head2 Subroutine Potential
 
-Whether a package has potential for a subroutine can be tested with the utility functions potentially_(can|defined). They have to be explicitely activated. Either globally by setting Package::Autoloader::Package::CANDEF=1 or individually by using the following technique:
+Whether a package has potential for a subroutine can be tested with the utility functions potentially_(can|defined). They can be explicitely activated (e.g. in a parent class). Either globally by setting Package::Autoloader::Package::CANDEFINED=1 or individually by using the following technique:
 
 	package Synopsis::Desc1;
 	use Package::Autoloader sub{eval shift}, sub{
-		$_[0]->potentially_candef;
+		$_[0]->potentially_candefinded;
 	};
 
 The dynamic functions take the name of a subroutine (meaning a string) as an argument and return true or false. That makes their use consistent, but different from from their static counterparts 'can' and 'defined'.
@@ -122,7 +121,7 @@ The two rules from the synopsis conveniently hide the full interface for rules. 
 
 =over 8
 
-=item * by giving B<a generator, a wildcard and a subroutine name> - a minimal rule object will be created;
+=item * by giving B<a generator, a wildcard and a subroutine specification> - a minimal rule object will be created;
 
 =item * by giving B<an array holding parameters for new()> - a rule object will be instantiated accordingly;
 
@@ -151,9 +150,9 @@ In order to minimize the number of rules to evaluate, they are organized by purp
 
 This detail only needs to be considered when you write your own rules class. See the pre_select attribute in the standard class.
 
-To widen the scope of a hierarchy search rule, shorten the names. Ex:: applies to all package names starting with Ex:: (no wildcard required), Ex::(A|B|C) is recognized as a regular expression and an empty package name applies to all packages.
+To widen the scope of a hierarchy search rule, shorten the names. Ex:: applies to all package names starting with Ex:: (no wildcard required), Ex::(A|B|C) is recognized as a regular expression and an empty package name applies to all packages. Alternatively you can specify a list of complete names (meaning these won't undergo wildcard interpretation) as an array reference.
 
-Similarly for subroutine names (any kind of search). Specify no_ to match a name starting with no_ (partial subroutine name ending in underscore but no wildcard required), no_(parking|money) is recognized as a regular expression and an empty subroutine name applies to all subroutines.
+Similarly for subroutine names (any kind of search). Specify no_ to match a name starting with no_ (partial subroutine name ending in underscore but no wildcard required), no_(parking|money) is recognized as a regular expression and an empty subroutine name applies to all subroutines. Alternatively you can specify a list of complete names (meaning these won't undergo wildcard interpretation) as an array reference.
 
 
 =head2 Generators
@@ -192,20 +191,84 @@ The following methods belong to the  public interface of Package::Autoloader::Pa
 
 =over 8
 
-=item B<potentially_candef>
+=item B<potentially_candefined>
 
 Activates the two subroutines potentially_can and potentially_defined for the current package.
 
-=item B<$Package::Autoloader::Package::CANDEF>
+=item B<$Package::Autoloader::Package::CANDEFINDED>
 
-A package global to activate potentially_candef for all pacakges. Please note you have to set it in a BEGIN block.
+A package global to activate potentially_candefined for all packages. Please note you have to set it in a BEGIN block.
 
 =item B<register_rule>
 
 Trigger the convenience function as described above.
 
+=item B<export>
+
+Trigger the export function as described below. It is actually a rule registration with a pre-defined generator suitable for export of existing subroutines.
+
 =back
 
+
+=head1 EXAMPLES
+
+The following example demonstrates the use of the on-demand export function.
+
+	package Synopsis;
+	use Package::Autoloader sub{eval shift}, sub {
+		$_[0]->export('::*', ['hello_world']);
+	};
+	
+	sub hello_world() { print "Hello World.\n"; };
+	
+	package Synopsis::Ex1;
+	use Package::Autoloader sub{eval shift};
+	
+	print STDOUT (defined(&hello_world) ? 'Can':'Cannot'),"\n";
+	print STDOUT (potentially_defined('hello_world') ? 'Can':'Cannot'),"\n";
+	
+	hello_world();
+
+The following example is one of those tempting idea which turn out to be a bug farm. The example enables set-style accessors for objects globally. You will probably prefer to use Package::Transporter for this purpose.
+
+	use Package::Autoloader sub{eval shift}, sub {
+		my $generator = q{
+			my $name = substr($sub_name, 4);
+			my $sub_text = sprintf(q{
+				my $self = shift;
+				$self->{%s} = shift;
+			}, $name);
+	 		return($sub_text);
+		};
+		$_[0]->register_rule($generator, '*', 'set_');
+	};
+	my $obj = bless( {}, 'main');
+	$obj->set_world(1);
+
+Closures are a fancy application for Autoloader. The following example creates subroutine names, which carry one argument in their name.
+
+	use Package::Autoloader sub{eval shift}, sub {
+		my $calc_generic = sub { return($_[1] * $_[0]/100 + $_[2]); };
+		my $generator = sub {
+			my ($pkg, $sub_name, $argc) = (shift, shift, shift);
+			my $argument = substr($sub_name, 5) || 100;
+			my $sub_text = sprintf(q{
+	my ($calc_generic, $arg1) = (shift(@_), shift(@_));
+	sub %s { return($calc_generic->($arg1, @_)); };
+	return(\&%s);
+			}, $sub_name, $sub_name);
+	
+			my $sub_ref = $pkg->transport(\$sub_text,
+				$calc_generic, $argument);
+	 		return($sub_ref);
+		};
+		$_[0]->register_rule($generator, '*', 'calc_');
+	};
+	
+	print calc_5(7, 8); # same as $calc_generic->(5, 7, 8);
+	exit(0);
+
+However, don't believe that closures are closed - you can hijack anything in Perl 5.
 
 =head1 BUGS AND LIMITATIONS
 

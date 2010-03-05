@@ -1,5 +1,8 @@
 Changes
 coding_style.txt
+examples/closures.pl
+examples/export.pl
+examples/set_accessors.pl
 examples/synopsis.pl
 INSTALL
 lib/Package/Autoloader.pm
@@ -12,5 +15,6 @@ MANIFEST			This list of files
 README
 t/01_fail_intentionally.t
 t/02_plausibility.t
+t/03_basic.t
 Todo
 META.yml                                 Module meta-data (added by MakeMaker)

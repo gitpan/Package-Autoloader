@@ -17,11 +17,15 @@ sub new {
 	my $self = [$generator, undef, undef, undef, $argc_match, [@_]];
 	bless($self, $class);
 
-	my $pre_selection = [$pkg_match, ''];
-	$pre_selection->[0] =~ s/\w*[^\w\:].*$//s;
-
-	if ($sub_match =~ m/^([a-z0-9]*_)/i) {
-		$pre_selection->[1] = $1 || '';
+	my $pre_selection = [$pkg_match, $sub_match];
+	if(ref($pkg_match) eq '') {
+		$pre_selection->[0] =~ s/\w*[^\w\:].*$//s;
+	}
+	if(ref($sub_match) eq '') {
+		$pre_selection->[1] = '';
+		if ($sub_match =~ m/^([a-z0-9]*_)/i) {
+			$pre_selection->[1] = $1 || '';
+		}
 	}
 	$self->[ATB_PRE_SELECT] = $pre_selection;
 
@@ -42,7 +46,9 @@ sub create_matcher {
 	my ($self, $name, $separator) = (shift, shift, shift);
 
 	my $matcher;
-	if (length($name) == 0) {
+	if (ref($name) eq 'ARRAY') {
+		$matcher = sub { scalar(grep($_ eq $_[0], @$name)) > 0 };
+	} elsif (length($name) == 0) {
 		$matcher = sub { 1 };
 	} elsif ($name =~ m,[^\w\:],) {
 		$matcher = sub { $_[0] =~ m,$name,o };

@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use Carp qw();
 
-our $VERSION = '0.05';
+our $VERSION = '0.06';
 
 use Package::Autoloader::Package;
 my $PACKAGES = {};
@@ -52,6 +52,10 @@ sub import {
 		}
 	}
 	return;
+}
+
+sub assemble {
+	return($_[0]->($obtain->((caller)[0], undef)));
 }
 
 #sub debug_dump {

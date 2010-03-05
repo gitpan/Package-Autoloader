@@ -6,8 +6,7 @@ use Package::Autoloader sub{eval shift}, sub {
 		my $greet = substr($sub_name, 6); #magic
  		return(qq{print 'Hello $greet\n'});
 	};
-	$_[0]->register_rule($generator, '::*', 'greet_');
-	$_[0]->register_rule($generator, '+', 'salut_');
+	$_[0]->register_rule($generator, '+::*', 'greet_');
 };
 
 
@@ -22,10 +21,11 @@ our @ISA = ('Synopsis');
 use Package::Autoloader sub{eval shift};
 
 my $obj = bless( \(my $o = 0), 'sisponyS::Desc2');
-print STDOUT ($obj->can('salut_monde') ? 'Can' : 'Cannot'), "\n";
-$obj->salut_monde();
+print STDOUT ($obj->can('greet_monde') ? 'Can' : 'Cannot'), "\n";
+print STDOUT ($obj->potentially_can('greet_monde')?'Can':'Cannot'),"\n";
+$obj->greet_monde();
 
 sub print_yn($) { print STDOUT (($_[0]) ? 'Yes' : 'No'), "\n"; }
-print_yn(defined(&sisponyS::Desc2::salut_monde));
-print_yn(defined(&Synopsis::Desc1::salut_monde));
-print_yn(defined(&Synopsis::salut_monde));
+print_yn(defined(&sisponyS::Desc2::greet_monde));
+print_yn(defined(&Synopsis::Desc1::greet_monde));
+print_yn(defined(&Synopsis::greet_monde));
