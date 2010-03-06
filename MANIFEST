@@ -2,6 +2,7 @@ Changes
 coding_style.txt
 examples/closures.pl
 examples/export.pl
+examples/search_path.pl
 examples/set_accessors.pl
 examples/synopsis.pl
 INSTALL
@@ -10,10 +11,11 @@ lib/Package/Autoloader.pod
 lib/Package/Autoloader/Package.pm
 lib/Package/Autoloader/Pre_Selection.pm
 lib/Package/Autoloader/Rule.pm
+lib/Package/Autoloader/Search_Path.pm
 Makefile.PL
 MANIFEST			This list of files
 README
-t/01_fail_intentionally.t
+t/01_warn.t
 t/02_plausibility.t
 t/03_basic.t
 Todo

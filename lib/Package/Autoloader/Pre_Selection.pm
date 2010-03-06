@@ -59,6 +59,7 @@ sub lookup_rule {
 		(shift, shift, shift, shift);
 
 	foreach my $pkg_prefix (@$pkg_list) {
+#		next unless (defined($pkg_prefix));
 		next unless (exists($self->{$pkg_prefix}));
 		my $pkg_rules = $self->{$pkg_prefix};
 

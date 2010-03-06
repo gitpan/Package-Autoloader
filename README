@@ -1,11 +1,7 @@
-Package::Autoloader - generic autoloading for packages
+Package::Autoloader - modular wrapper for 'AUTOLOAD' with dynamic export
 
-This module is a complement to L<Package::Transporter>, adding the
-functionality for DMN_AUTOLOAD. However, it can also stand on its own,
-increasing the potential for code re-use.
+This is an experimental module and in relation to its complexity there are not enough tests available to consider it ready for general production use, yet.
 
-Package::Autoloader supplies packages with subroutine definitions on
-the fly. Once a missing subroutine is encountered in a package, Perl's
-autoload mechanism is triggered and groups of rules are checked for a
-matching generator. By default a missing subroutine is generated
-inside a package by an eval().
+Package::Autoloader can be seen as a class for AUTOLOAD objects, which are managed behind a system of convenience methods. The system exports potential instead of drain to other packages. The potential can be tested with two functions, potentially_can and potentially_defined. For details, read the man page for Package::Autoloader.
+
+You might want to run the examples from the directory of the same name.

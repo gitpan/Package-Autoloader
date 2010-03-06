@@ -2,43 +2,60 @@
 
 =head1 NAME
 
-Package::Autoloader - modular wrapper for 'AUTOLOAD' with dynamic export
-
+Package::Autoloader - a modular wrapper for 'AUTOLOAD'
 
 =head1 SYNOPSIS
 
-The following basic example demonstrates how subroutine generation is done and how packages can facilitate the potential.
+The following basic example demonstrates how subroutine generation is done and how packages can facilitate the potential. All examples in this document can be found as separate Perl files in the examples directory.
+
 
 	package Synopsis;
 	use Package::Autoloader sub{eval shift}, sub {
+	#     consume rules ----^=============^  ^====^-- define rules
+
 		my $generator = q{
 			my $greet = substr($sub_name, 6); #magic
+			print STDERR "Generating sub '$sub_name'.\n";
 	 		return(qq{print 'Hello $greet\n'});
+	# subroutine body text ---^====================^
 		};
-		$_[0]->register_rule($generator, '+::*', 'greet_');
-	};
 
+		$_[0]->register_rule($generator, '::*', 'hola_');
+	# wildcard ------------------------------^===^  ^=====^--sub name
+		$_[0]->register_rule($generator, '=', 'salut_');
+	};
+	
 	
 	package Synopsis::Desc1;
 	use Package::Autoloader sub{eval shift};
 	
-	greet_mundo();
-
+	!defined(&hola__mundo);
+	potentially_defined('hola__mundo');
+	
+	hola__mundo();
+	#     ^===^--- variable name of subroutine
 	
 	package sisponyS::Desc2;
 	our @ISA = ('Synopsis');
 	use Package::Autoloader sub{eval shift};
 	
 	my $obj = bless( \(my $o = 0), 'sisponyS::Desc2');
-	$obj->greet_monde();
+	
+	!potentially_defined('hola__mundo');
+	!defined(&salut_monde);
+	!potentially_defined('salut_monde');
+	!$obj->can('salut_monde');
+	$obj->potentially_can('salut_monde');
+	
+	$obj->salut_monde();
+	#           ^===^--- variable name of method
 
 
-All examples in this document can be found as separate perl files in
-the examples directory.
+The synopsis demonstrates the two things you can do with Package::Autoloader: consume rules and define rules for automatic subroutine generation.
 
-The dynamically generated subroutines greet_mundo and greet_monde print Hello plus the second part of their name to the screen. The example makes maximum use of convenience features.
+The dynamically generated subroutines greet_mundo and salut_monde print Hello plus the second part of their name to the screen. (The impartial translation is intentional to stress what is happening - this package is not about localisation.) The synopsis makes maximum use of convenience features, which hide the full flexibility of the interface.
 
-The package sisponyS::Desc2 should remind you that 'can', 'defined' and 'exists' are not aware of AUTOLOAD. However, there are two subroutines potentially_can, and potentially_defined, which are aware of Package::Autoloader. Details below.
+The void tests should remind you that 'can', 'defined' and 'exists' are not aware of AUTOLOAD. However, there are two subroutines potentially_can, and potentially_defined, which are aware of Package::Autoloader. Details below.
 
 
 =head1 WARNING
@@ -50,18 +67,56 @@ This is an experimental module. It hasn't been thoroughly tested, making the pro
 
 Package::Autoloader supplies packages with subroutine definitions on the fly. It requires individual activation with the sub-eval-shift like shown in the synopsis. This module complements L<Package::Transporter>.
 
-Once a missing subroutine is encountered, Perl's autoload mechanism forwards the request to an autoloader object and a tree of rules is checked for a matching generator. If one is found, the generator should bring the requested subroutine into existence.
+Once a missing subroutine is encountered in a package, Perl's autoload mechanism forwards the request to the autoloader object of the package. The object uses a pre-selection tree to identify suitable rules and checks them for a matching generator. The rules are normally activated during compile time. If one is found, the generator should bring the requested subroutine into existence.
 
-Rules are searched hierarchically through he components of the package name. For the package A::B::C the name hierarchy is A::B::C, A::B::, A::, and ''. Any rule found on the way to the top is checked and if the check is successful, the search stops.
 
-From a practical point of view, Package::Autoloader enables you to specify autoloading in terms of modular rules instead of a monolithic AUTOLOAD subroutine. The rules are normally activated during compile time.
+=head2 Motivation and Background
 
-The following lines, added to the synopsis, should print the words No, No, Yes to the screen. The method greet_monde springs into existence as a subroutine in a parent class. The reverse name sisponyS should stress that the search goes along @ISA (using whatever MRO is in effect).
+In Perl5 subroutines are brought into existence on demand via AUTOLOAD. It's a monolithic subroutine and handles exactly one package. Although AUTOLOAD is simple to use for trivial cases, it immediately looses its simplicity when doing OO programming. AUTOLOAD is subject to be overridden by other AUTOLOAD routines as part of OO. As a consequence, one has to find the parent AUTOLOADs with SUPER:: or mro::next::method and write them all in a specific way. Simplicity has already gone by then. That it the whole point.
 
-	sub print_yn($) { print STDOUT (($_[0]) ? 'Yes' : 'No'), "\n"; }
-	print_yn(defined(&sisponyS::Desc2::greet_monde));
-	print_yn(defined(&Synopsis::Desc1::greet_monde));
-	print_yn(defined(&Synopsis::greet_monde));
+Package::Autoloader can be seen as an AUTOLOAD object, which hides the complexity of AUTOLOAD in non-trivial cases.
+
+Another problem is the drain of Exporter. Autoloaded subroutines spring into existence when exported. In general that is more problematic than it sounds. Consider these two concepts of AUTOLOAD:
+
+#1 Unlimited potential, which is tapped only when the missing subroutine is called. Export is about neither, because it requires full names in advance.
+
+#2 Auto-vivification is conflict-free. AUTOLOAD never creates a subroutine with the same name of an existing subroutine. But export does that.
+
+Again, in the general case one would like to see the potential being exported, not the drain. Package::Autoloader provides that.
+
+Last but not least, the functions can, exists and defined are not aware of AUTOLOAD. That is a good thing, because it allows for differentiated views. But one would like to test for potential, too. Package::Autoloader adds new functions, which are called potentially_can and potentially_defined. There is no potentially_exists, because it is a subtle distinction from defined, which can't be made with the information in AUTOLOAD.
+
+
+=head2 Consumption via Search Paths
+
+The search path is a list of package names, which are searched for rules. Rules decide autonomously whether they actually apply to a missing subroutine or not. There is no need to set the search path explicitly, but the default one has to be explained.
+
+By default the search path consists of the components of the package name. For the package A::B::C the name hierarchy is A::B::C, A::B::, A::, and ''. Any rule found on the way to the top is checked and if the check is successful, the search stops. You can modify the search path with the search proxy methods as follows.
+
+	package A::B::C;
+	# default search:
+	# 	A::B::C
+	# 	A::B::
+	# 	A::
+	# 	''
+	use Package::Autoloader sub{eval shift}, sub {
+		$_[0]->search->first('D');	# D before A::B::C
+		$_[0]->search->not_self;	# no A::B::C
+		$_[0]->search->second('D');	# D after A::B::C
+		$_[0]->search->not_hierarchy;	# no A::B::, A::
+		$_[0]->search->third('D');	# D before ''
+		$_[0]->search->not_globally;	# no ''
+		$_[0]->search->fourth('D');	# D after ''
+	};
+
+First and fourth are absolute, the rest are relative. Again, these features target very special requirements.
+
+For method lookup a full hierarchical search is started in each parent class. The following lines, added to the synopsis, should print the words No, No, Yes to the screen. The method salut_monde springs into existence as a subroutine in a parent class, because it is defined there only.
+
+	sub print_yn($) { print STDERR (($_[0]) ? 'Yes' : 'No'), "\n"; }
+	print_yn(defined(&sisponyS::Desc2::salut_monde));
+	print_yn(defined(&Synopsis::Desc1::salut_monde));
+	print_yn(defined(&Synopsis::salut_monde));
 
 
 =head2 Convenience Functions
@@ -74,13 +129,19 @@ The wildcard is one of the following four symbols:
 
 =over 8
 
-=item a single plus '+' means the rule applies to the package itself only, although the generated subroutines follow inheritance;
+=item * B<a single plus '+'> means the rule applies to the package itself only, although the generated subroutines follow inheritance;
 
-=item a double colon followed by an asterisk '::*' means the rule applies to package names deeper in the hierarchy, so that the rules defined in Synopis applies to Synopsis::Desc1;
+=item * a double colon followed by an asterisk '::*'
 
-=item combination of the above symbols '+::*' is a combination of the functions; and
+means the rule applies to package names deeper in the hierarchy, so that the rules defined in Synopis applies to Synopsis::Desc1;
 
-=item a single asterisk '*' means the rule applies globally other packages, including itself;
+=item * a combination of the above symbols '+::*'
+
+means a combination of their functions; and
+
+=item * a single asterisk '*'
+
+means the rule applies globally other packages, including itself;
 
 =back
 
@@ -89,7 +150,7 @@ The third argument can be either a single subroutine name, an array reference of
 
 =head2 Subroutine Potential
 
-Whether a package has potential for a subroutine can be tested with the utility functions potentially_(can|defined). They can be explicitely activated (e.g. in a parent class). Either globally by setting Package::Autoloader::Package::CANDEFINED=1 or individually by using the following technique:
+Whether a package has potential for a subroutine can be tested with the utility functions potentially_(can|defined). They can be explicitly activated (e.g. in a parent class). Either globally by setting Package::Autoloader::Package::CANDEFINED=1 or individually by using the following technique:
 
 	package Synopsis::Desc1;
 	use Package::Autoloader sub{eval shift}, sub{
@@ -117,7 +178,7 @@ Every package using Package::Autoloader gets an individual AUTOLOAD subroutine. 
 
 =head1 RULES
 
-The two rules from the synopsis conveniently hide the full interface for rules. You can specify rules in three ways
+From a practical point of view, Package::Autoloader enables you to specify autoloading in terms of modular rules instead of a monolithic AUTOLOAD subroutine. The two rules from the synopsis conveniently hide the full interface for rules. You can specify rules in three ways
 
 =over 8
 
@@ -212,7 +273,7 @@ Trigger the export function as described below. It is actually a rule registrati
 
 =head1 EXAMPLES
 
-The following example demonstrates the use of the on-demand export function.
+The following example demonstrates the use of the on-demand export function, plus some void tests, which are wrapped with yn() as usual in the examples file.
 
 	package Synopsis;
 	use Package::Autoloader sub{eval shift}, sub {
@@ -224,10 +285,10 @@ The following example demonstrates the use of the on-demand export function.
 	package Synopsis::Ex1;
 	use Package::Autoloader sub{eval shift};
 	
-	print STDOUT (defined(&hello_world) ? 'Can':'Cannot'),"\n";
-	print STDOUT (potentially_defined('hello_world') ? 'Can':'Cannot'),"\n";
-	
+	!defined(&hello_world);
+	potentially_defined('hello_world');
 	hello_world();
+	defined(&hello_world);
 
 The following example is one of those tempting idea which turn out to be a bug farm. The example enables set-style accessors for objects globally. You will probably prefer to use Package::Transporter for this purpose.
 

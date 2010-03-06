@@ -12,9 +12,9 @@ use Package::Autoloader sub{eval shift}, sub {
 		$i += 7;
 		return(qq{sprintf('$i%s', '$_[1]')});
 	};
-	$_[0]->register_rule($generator, '+', 'tfrv1');
+	$_[0]->register_rule($generator, '=', 'tfrv1');
 	$_[0]->register_rule($generator, '::*', 'tfrv2');
-	$_[0]->register_rule($generator, '+', 'tfrv3');
+	$_[0]->register_rule($generator, '=', 'tfrv3');
 #	$_[0]->potentially_candefined;
 };
 

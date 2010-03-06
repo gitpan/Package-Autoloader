@@ -1,3 +1,19 @@
+0.07	06 March 2010
+	- search path as separate class
+	- updated README
+	- completed Changes
+
+0.06	05 March 2010
+	- convenience function accepts arrays of names
+	- added examples
+	- load potentially_(can|defined) on demand
+	- convenience method for export
+
+0.05	04 March 2010
+	- introduced symbolic wildcards (replaces two separate rule trees)
+	- restored ISA search for potentially_can
+	- added more tests
+
 0.04	02 March 2010
 	- changed implementation to be less than Package::Transporter
 

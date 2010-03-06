@@ -3,15 +3,17 @@ use strict;
 use warnings;
 use Carp qw();
 use Scalar::Util qw(blessed);
+use mro qw();
 
 our $CANDEFINED = 0;
 
 sub ATB_PKG_NAME() { 0 };
 sub ATB_VISIT_POINT() { 1 };
-sub ATB_SEARCH_PATH() { 2 };
+sub ATB_SEARCH() { 2 };
 
 use Package::Autoloader::Rule;
 use Package::Autoloader::Pre_Selection;
+use Package::Autoloader::Search_Path;
 my $RULES = Package::Autoloader::Pre_Selection->new(); 
 
 my $autoload = q{
@@ -53,9 +55,9 @@ sub package_hierarchy {
 sub new {
 	my ($class, $pkg_name, $visit_point) = @_;
 
-	my $self = [$pkg_name,
+	my $self = [$pkg_name, 
 		$visit_point,
-		package_hierarchy($pkg_name),
+		Package::Autoloader::Search_Path->new($pkg_name)
 	];
 	bless($self, $class);
 	Internals::SvREADONLY(@{$self}, 1);
@@ -69,6 +71,8 @@ sub new {
 }
 
 sub name { return($_[0][ATB_PKG_NAME]); };
+
+sub search { return($_[0][ATB_SEARCH]); };
 
 sub potentially_candefined {
 	$_[0]->transport(\$can, $_[0]);
@@ -115,8 +119,8 @@ sub($$;@) {
 	if ($rule_ref eq 'CODE') {
 		my @pkg_names = ($self->[ATB_PKG_NAME]);
 		my $wildcard = shift;
-		if ($wildcard eq '+') {
-		} elsif ($wildcard eq '+::*') {
+		if ($wildcard eq '=') {
+		} elsif ($wildcard eq '=::*') {
 			push(@pkg_names, $pkg_names[0]);
 			$pkg_names[1] .= '::';
 		} elsif ($wildcard eq '::*') {
@@ -212,7 +216,7 @@ sub autoload_generic {
 
 sub find_generator {
 	return($RULES->lookup_rule(
-		$_[0][ATB_SEARCH_PATH],
+		$_[0][ATB_SEARCH]->path,
 		$_[0][ATB_PKG_NAME],
 		$_[1], @_));
 }
