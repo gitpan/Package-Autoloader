@@ -1,3 +1,4 @@
+#!/usr/bin/perl -W -T
 use strict;
 
 package A::B::C;
@@ -13,7 +14,7 @@ use Package::Autoloader sub{eval shift}, sub {
 	$_[0]->search->not_hierarchy;	# no A::B::, A::
 	$_[0]->search->third('F');	# F before ''
 	$_[0]->search->not_globally;	# no ''
-	$_[0]->search->fourth('G');	# G after ''
+	$_[0]->search->last('G');	# G after ''
 
 	use Data::Dumper;
 	print STDERR Dumper($_[0]);

@@ -1,22 +1,18 @@
+#!/usr/bin/perl -W -T
 use strict;
 
 package Synopsis;
 use Package::Autoloader sub{eval shift}, sub {
 # you consume rules ----^=============^  ^====^-- you define rules
 
-	my $generator = q{
-		my $greet = substr($sub_name, 6); #magic
-		print STDERR "Generating subroutine '$sub_name'.\n";
- 		return(qq{print 'Hello $greet\n'});
-# subroutine body text ---^====================^
-	};
-
-	$_[0]->register_rule($generator, '::*', 'hola_');
-# wildcard ------------------------------^===^  ^=====^-- sub name
-	$_[0]->register_rule($generator, '=', 'salut_');
+	$_[0]->register_rule('Hello_Anything', '::*', 'hola_');
+# wildcard ------------------------------------^===^  ^=====^-- sub name
+	$_[0]->register_rule('Hello_Anything', '=', 'salut_');
+# generator class -----------^==============^
 
 	my $yn = q{
- 		return(q{print STDERR ($_[0] ? 'Yes' : 'No'), "\n";});
+ 		return(q{print STDOUT ($_[0] ? 'Yes' : 'No'), "\n";});
+# subroutine body ------^==========================================^
 	};
 	$_[0]->register_rule($yn, '*', 'yn');
 };

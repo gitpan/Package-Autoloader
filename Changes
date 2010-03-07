@@ -1,3 +1,7 @@
+0.08	07 March 2010
+	- stuff it with convenience until it goes boom ;)
+	- Generators as a separate class
+
 0.07	06 March 2010
 	- search path as separate class
 	- updated README

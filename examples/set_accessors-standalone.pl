@@ -1,3 +1,4 @@
+#!/usr/bin/perl -W -T
 use strict;
 
 use Package::Autoloader sub{eval shift}, sub {

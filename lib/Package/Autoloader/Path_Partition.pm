@@ -1,4 +1,4 @@
-package Package::Autoloader::Search_Path;
+package Package::Autoloader::Path_Partition;
 use strict;
 use warnings;
 
@@ -14,6 +14,7 @@ sub package_hierarchy {
 	return(\@hierarchy);
 }
 
+# ugly, but encapsulated :)
 sub new {
 	my ($class, $pkg_name) = @_;
 
@@ -22,16 +23,16 @@ sub new {
 	bless($self, $class);
 	Internals::SvREADONLY(@{$self}, 1);
 
-	return($self);
+	return($search, $self);
 }
 
-sub path { return($_[0][ATB_PATH]); };
+#sub path { return($_[0][ATB_PATH]); };
 
 sub first {
 	my $self = shift;
-	my $count = scalar(@_);
 	my $s123 = $self->[ATB_123];
 	unshift(@{$self->[ATB_PATH]}, @_);
+	my $count = scalar(@_);
 	$s123->[0] += $count;
 	$s123->[2] += $count;
 	$s123->[4] += $count;
@@ -52,8 +53,9 @@ sub not_self {
 sub second {
 	my $self = shift;
 	my $s123 = $self->[ATB_123];
-	my $count = scalar(@_);
 	splice(@{$self->[ATB_PATH]}, $s123->[2], 0, @_);
+	my $count = scalar(@_);
+	$s123->[2] += $count;
 	$s123->[4] += $count;
 	return;
 }
@@ -70,9 +72,10 @@ sub not_hierarchy {
 
 sub third {
 	my $self = shift;
+	my $s123 = $self->[ATB_123];
+	splice(@{$self->[ATB_PATH]}, $s123->[4], 0, @_);
 	my $count = scalar(@_);
-	splice(@{$self->[ATB_PATH]}, $self->[ATB_123][4], 0, @_);
-	$self->[ATB_123][4] += $count;
+	$s123->[4] += $count;
 	return;
 }
 
@@ -85,7 +88,7 @@ sub not_globally {
 	return;
 }
 
-sub fourth {
+sub last {
 	my $self = shift;
 	push(@{$self->[ATB_PATH]}, @_);
 	return;

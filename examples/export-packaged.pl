@@ -1,8 +1,9 @@
+#!/usr/bin/perl -W -T
 use strict;
 
 package Synopsis;
 use Package::Autoloader sub{eval shift}, sub {
-	$_[0]->export('::*', ['hello_world']);
+	$_[0]->register_rule('Export', '::*', ['hello_world']);
 
 	my $yn = q{
  		return(q{print STDERR ($_[0] ? 'Yes' : 'No'), "\n";});

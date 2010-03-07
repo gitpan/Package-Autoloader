@@ -46,13 +46,13 @@ sub register_rule {
 }
 
 
-sub any_rules {
-	my ($self, $pkg_name, $sub_name) = @_;
-
-	return(0) unless (exists($self->{$pkg_name}));
-	return(0) unless (exists($self->{$pkg_name}{$sub_name}));
-	return(1);
-}
+#sub any_rules {
+#	my ($self, $pkg_name, $sub_name) = @_;
+#
+#	return(0) unless (exists($self->{$pkg_name}));
+#	return(0) unless (exists($self->{$pkg_name}{$sub_name}));
+#	return(1);
+#}
 
 sub lookup_rule {
 	my ($self, $pkg_list, $pkg_name, $sub_name) =

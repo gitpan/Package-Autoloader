@@ -9,11 +9,13 @@ our $CANDEFINED = 0;
 
 sub ATB_PKG_NAME() { 0 };
 sub ATB_VISIT_POINT() { 1 };
-sub ATB_SEARCH() { 2 };
+sub ATB_SEARCH_PATH() { 2 };
+sub ATB_PATH_PARTITION() { 3 };
 
 use Package::Autoloader::Rule;
 use Package::Autoloader::Pre_Selection;
-use Package::Autoloader::Search_Path;
+use Package::Autoloader::Path_Partition;
+use Package::Autoloader::Generator;
 my $RULES = Package::Autoloader::Pre_Selection->new(); 
 
 my $autoload = q{
@@ -42,37 +44,26 @@ my $defined = q{
 	return(\&potentially_defined);
 };
 
-sub package_hierarchy {
-	my $name = shift;
-	my @hierarchy = ($name);
-	while($name =~ s,\w+(::)?$,,s) {
-		push(@hierarchy, $name);
-	}
-	return(\@hierarchy);
-}
-
-
 sub new {
 	my ($class, $pkg_name, $visit_point) = @_;
 
-	my $self = [$pkg_name, 
+	my $self = [
+		$pkg_name, 
 		$visit_point,
-		Package::Autoloader::Search_Path->new($pkg_name)
+		Package::Autoloader::Path_Partition->new($pkg_name)
 	];
 	bless($self, $class);
 	Internals::SvREADONLY(@{$self}, 1);
 
 	$self->transport(\$autoload, $self);
-	Carp::confess($@) if ($@);
 	$self->potentially_candefined if ($CANDEFINED);
-	Carp::confess($@) if ($@);
 
 	return($self);
 }
 
 sub name { return($_[0][ATB_PKG_NAME]); };
 
-sub search { return($_[0][ATB_SEARCH]); };
+sub search { return($_[0][ATB_PATH_PARTITION]); };
 
 sub potentially_candefined {
 	$_[0]->transport(\$can, $_[0]);
@@ -94,11 +85,13 @@ sub transport {
 	unless (ref($code_ref) eq 'SCALAR') {
 		Carp::confess("Code not a scalar ref.\n");
 	}
+	my $sa = $@;
 	my $rv = $self->[ATB_VISIT_POINT]->($$code_ref, @_);
 	if ($@) {
 		print STDERR "Offending Code:\n", $$code_ref, "\n";
 		Carp::confess($@);
 	}
+	$@ = $sa;
 	return($rv);
 }
 
@@ -107,16 +100,42 @@ sub register_rule {
 
 	my $rule_ref = ref($rule);
 	if ($rule_ref eq '') {
-		my $code = sprintf(q{
+		if ($rule =~ m,^([\w_]+($|::))+,) {
+			my $class;
+			if($rule =~ m,:,) {
+				$class = $rule;
+			} else {
+				$class = "Package::Autoloader::Generator::$rule";
+			}
+			# shows the impractical parts of Perl5
+			my $class_for_require = $class;
+			$class_for_require =~ s,::,/,sg;
+			$class_for_require .= '.pm';
+			#local $!; # isn't this handled inside require?
+			require $class_for_require;
+			$rule = $class->new($self);
+			$rule_ref = 'Package::Autoloader::Generator';
+		} else {
+			my $code = sprintf(q{
 sub($$;@) {
 	my($pkg, $sub_name, @args) = @_;
-	%s
+%s
 }}, $rule);
-		$rule = eval $code;
-		Carp::confess($@) if ($@);
-		$rule_ref = 'CODE';
+			local $@;
+			$rule = eval $code;
+			Carp::confess($@) if ($@);
+			$rule_ref = 'CODE';
+		}
 	}
+
 	if ($rule_ref eq 'CODE') {
+		if(ref($rule) eq 'CODE') {
+			bless($rule, 'Package::Autoloader::Generator');
+		}
+		$rule_ref = 'Package::Autoloader::Generator';
+	}
+
+	if($rule_ref eq 'Package::Autoloader::Generator') {
 		my @pkg_names = ($self->[ATB_PKG_NAME]);
 		my $wildcard = shift;
 		if ($wildcard eq '=') {
@@ -137,47 +156,11 @@ sub($$;@) {
 		my $rule = Package::Autoloader::Rule->new(@$rule);
 		$RULES->register_rule($rule, $rule->pre_select);
 	} else {
+		Carp::confess;
 		$RULES->register_rule($rule, $rule->pre_select);
 	}
 
 	return;
-};
-
-sub export {
-	my ($self) = (shift);
-	my $generator = sub {
-		my ($pkg, $sub_name, $argc) = (shift, shift, shift);
-		my $sub_text = sprintf(q{
-my $sub_ref = \&%s::%s;
-*%s = $sub_ref;
-return($sub_ref);
-		}, $self->name, $sub_name, $sub_name);
-
-		my $sub_ref = $pkg->transport(\$sub_text);
- 		return($sub_ref);
-	};
-	$self->register_rule($generator, @_);
-}
-
-my $std_sub = q{
-	sub %s { %s };
-	return(\&%s);
-};
-sub run_generator {
-	my ($self, $generator, $sub_name) = (shift, shift, shift);
-
-	return(undef) unless (defined($generator));
-
-	my $code = $generator->($self, $sub_name, @_);
-	Carp::confess('No code.') unless (defined($code));
-	if (ref($code) eq '') {
-		unless ($code =~ m,^[\n\t\s]*sub[\n\t\s],) {
-			$code = sprintf($std_sub, $sub_name, $code, $sub_name);
-		}
-
-		$code = $self->transport(\$code);
-	}
-	return($code);
 };
 
 sub autoload_generic {
@@ -198,7 +181,7 @@ sub autoload_generic {
 
 	my $generator;
 	if (blessed($_[0])) {
-		my $ISA = mro::get_linear_isa($self->[ATB_PKG_NAME]);
+		my $ISA = mro::get_linear_isa($pkg_name);
 		($self, $generator) = Package::Autoloader::find_generator($ISA, $sub_name, @_);
 	} else {
 		$generator = $self->find_generator($sub_name, @_);
@@ -207,16 +190,12 @@ sub autoload_generic {
 	unless (defined($generator)) {
 		Carp::confess("Unable to create '$sub_name' for $pkg_name (no generator found).");
 	}
-	my $sub_ref = $self->run_generator($generator, $sub_name, @_);
-	unless (defined($sub_ref)) {
-		Carp::confess("Unable to create '$sub_name' for $pkg_name (generator failed).");
-	}
-	return($sub_ref);
+	return($generator->run($self, $pkg_name, $sub_name, @_));
 }
 
 sub find_generator {
 	return($RULES->lookup_rule(
-		$_[0][ATB_SEARCH]->path,
+		$_[0][ATB_SEARCH_PATH],
 		$_[0][ATB_PKG_NAME],
 		$_[1], @_));
 }

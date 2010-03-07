@@ -1,4 +1,4 @@
-#!/usr/bin/perl -W
+#!/usr/bin/perl -W -T
 use strict;
 use Test::Simple tests => 1;
 
