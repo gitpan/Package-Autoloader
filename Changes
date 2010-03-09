@@ -1,3 +1,7 @@
+0.10	09 March 2010
+	- support for prototypes (useless unless honored by AUTOLOAD)
+	- more documentation
+
 0.09	08 March 2010
 	- ready-made matcher subroutines can be passed to register_rule
 	- example generator to AUTOLOAD from a SQL database

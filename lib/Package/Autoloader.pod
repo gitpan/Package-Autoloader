@@ -10,8 +10,8 @@ The following basic example demonstrates how subroutine generation is done and h
 
 	package Synopsis;
 	use Package::Autoloader sub{eval shift}, sub {
-		$_[0]->register_rule('Hello_Anything', '::*', 'hola_');
-		$_[0]->register_rule('Hello_Anything', '=', 'salut_');
+		$_[0]->register_rule('::Hello_Anything', '::*', 'hola_');
+		$_[0]->register_rule('::Hello_Anything', '=', 'salut_');
 	};
 
 	package Synopsis::Desc1;
@@ -101,7 +101,7 @@ For method lookup a full hierarchical search is started in each parent class. Th
 
 The method register_rule has a convenience mode, where it accepts three-argument rule shortcuts. The first argument is a generator, the second is a wildcard and the third is the matching subroutine pattern.
 
-Minimally the generator is the textual body of a subroutine, which should at least generate textual bodies of other subroutines. Alternatively you can give a reference to a subroutine, a generator object or the name of a generator class.
+Minimally the generator is the textual body of a subroutine, which should at least generate textual bodies of other subroutines. Alternatively you can give a reference to a subroutine, a generator object or the (partial) name of a generator class. ('::Hello_Anything' will be interpreted as 'Package::Autoloader::Generator::Hello_Anything').
 
 The wildcard is one of the following four symbols:
 
@@ -172,7 +172,9 @@ This is an early public release. Also see the Todo file. The documentation can't
 
 =head2 Prototypes
 
-Prototypes checks occurs at compile time, when AUTOLOAD isn't considered, yet. Therefore AUTOLOAD wasn't made aware of prototype definitions.
+See the generator 'SQL_Table' for an attempt to have prototypes with AUTOLOAD.
+
+Prototype checks occur at compile time, when AUTOLOAD isn't considered, yet. Therefore AUTOLOAD wasn't made aware of prototype definitions.
 
 Imagine the following situation, where subroutine A calls B and vice versa (so that you can't simply change the order):
 
@@ -193,9 +195,9 @@ Beside that, in a modified 'defined' you won't easily get the name of the subrou
 
 =head2 Common Pitfalls
 
-The statement 'use Package::Autoloader' is executed during compile time. Some things are not available then. Like the DATA file handle or lexical variables. You can use Package::Autoloader::again, see from_database.pl and from_DATA.pl.
+The statement 'use Package::Autoloader' is executed during compile time. Some things are not available then. Like the DATA file handle or lexical variables. You can use Package::Autoloader::again, see sql_table.pl and DATA_section.pl.
 
-Matching subroutine names with '' means that you can generate anything. It's most likely not what you want. Example:
+Matching subroutine names with '' means that you promise to generate anything. It's most likely not what you want. Example:
 
 	$_[0]->register_rule('Some_Generator_Class', '=', '');
 

@@ -39,12 +39,30 @@ sub new {
 
 		my $code = sprintf($std_sub, 
 			$sub_name,
-			(defined($row->[0]) ? "($row->[1])" : ''),
+			(defined($row->[0]) ? "($row->[0])" : ''),
 			$row->[1],
 			$sub_name);
  		return($pkg->transport(\$code));
 	};
 	bless($generator, $class);
+}
+
+my $prototypes =  qq{
+SELECT sub_name, sub_prototype
+FROM _subroutines
+WHERE (sub_event = 'on_demand')
+AND NOT ISNULL(sub_prototype)
+AND ((sub_package = ?) OR ISNULL(sub_package))
+};
+sub prototypes {
+	my ($self, $pkg, $dbh) = (shift, shift, shift);
+
+	my $rows = $dbh->selectall_arrayref($prototypes, {}, $pkg->name);
+	my $code = '';
+	foreach my $row (@$rows) {
+		$code .= sprintf('sub %s(%s); ', @$row);
+	}
+	$pkg->transport(\$code);
 }
 
 sub matcher {

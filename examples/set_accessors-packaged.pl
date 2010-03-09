@@ -2,7 +2,7 @@
 use strict;
 
 use Package::Autoloader sub{eval shift}, sub {
-	$_[0]->register_rule('Set_Accessors_Demo', '*', 'set_');
+	$_[0]->register_rule('::Set_Accessors_Demo', '*', 'set_');
 };
 
 my $obj = bless( {}, 'main');

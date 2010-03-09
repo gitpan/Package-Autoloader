@@ -1,9 +1,10 @@
 Changes
 coding_style.txt
-examples/closures-packaged.pl
-examples/closures-standalone.pl
+examples/.synopsis.pl.swp
+examples/closures_demo.pl
 examples/DATA_section.pl
 examples/eponymous_directory.pl
+examples/eponymous_directory/-prototypes.pl
 examples/eponymous_directory/hello_world.pl
 examples/eponymous_directory/yn.pl
 examples/eponymous_tie.pl
@@ -21,14 +22,17 @@ lib/Package/Autoloader.pod
 lib/Package/Autoloader/Generator.pm
 lib/Package/Autoloader/Generator.pod
 lib/Package/Autoloader/Generator/Closures_Demo.pm
+lib/Package/Autoloader/Generator/Closures_Demo.pod
 lib/Package/Autoloader/Generator/Eponymous_Directory.pm
 lib/Package/Autoloader/Generator/Eponymous_Directory.pod
 lib/Package/Autoloader/Generator/Eponymous_Tie.pm
 lib/Package/Autoloader/Generator/Eponymous_Tie.pod
 lib/Package/Autoloader/Generator/Export.pm
+lib/Package/Autoloader/Generator/Export.pod
 lib/Package/Autoloader/Generator/Hello_Anything.pm
 lib/Package/Autoloader/Generator/Hello_Anything.pod
 lib/Package/Autoloader/Generator/Set_Accessors_Demo.pm
+lib/Package/Autoloader/Generator/Set_Accessors_Demo.pod
 lib/Package/Autoloader/Generator/SQL_Table.pm
 lib/Package/Autoloader/Generator/SQL_Table.pod
 lib/Package/Autoloader/Package.pm
@@ -39,6 +43,7 @@ lib/Package/Autoloader/Rule.pod
 Makefile.PL
 MANIFEST			This list of files
 README
+SIGNATURE
 t/01_warn.t
 t/02_plausibility.t
 t/03_basic.t

@@ -6,7 +6,7 @@ package eponymous_directory;
 # eponymous means the same name ... as the package 'eponymous_directory'
 
 use Package::Autoloader sub{eval shift}, sub {
-	$_[0]->register_rule('Eponymous_Directory', '=', undef);
+	$_[0]->register_rule('::Eponymous_Directory', '=', undef);
 };
 
 yn(potentially_defined('hello_worlds'));

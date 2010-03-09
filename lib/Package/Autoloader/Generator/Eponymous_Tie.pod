@@ -2,13 +2,13 @@
 
 =head1 NAME
 
-Package::Autoloader::Generator::Eponymous_Tie
+Package::Autoloader::Generator::Eponymous_Tie - subroutines from a DB file
 
 =head1 SYNOPSIS
 
 	use strict;
 	Package::Autoloader::again sub{eval shift}, sub {
-		$_[0]->register_rule('Eponymous_Tie', '=', undef);
+		$_[0]->register_rule('::Eponymous_Tie', '=', undef);
 	};
 	
 	yn(potentially_defined('hello_worlds'));
@@ -23,6 +23,8 @@ Package::Autoloader::Generator::Eponymous_Tie
 
 =head1 DESCRIPTION
 
+The generator can be used to keep the subroutines of a module in a DB file. In case your module has a huge number of subroutines, out of which only a few are typically used, keeping the subroutines in an external source might conserve time and memory.
+
 Eponymous means the same name. This generator uses the subroutine name as a key to a DB-file with the same base name as the package file. Example:
 
 	Package: The::Requesting::Package
@@ -32,6 +34,18 @@ Eponymous means the same name. This generator uses the subroutine name as a key 
 
 The generator extracts all keys from the DB-file and uses that for rule matches. Newly added keys will only be seen on the next start of the program.
 
+=head2 Prototypes
+
+Prototype definitions are supported, but have to be explicitely requested. It only makes sense if defining and requesting package are the same (therefore the explicit request). Beside that, the correct prototype might not be known at compile time. However, for AUTOLOADed subroutines the prototype is not checked in Perl5, so for the moment prototypes are pretty much useless.
+
+The prototypes are given by appending the string '-prototype' to the key. See 'hello_world-prototype' below.
+
+	Package::Autoloader::again sub{eval shift}, sub {
+	        my $generator = Package::Autoloader::Generator::Eponymous_Tie->new($_[0]);
+	        $generator->prototypes($_[0]);
+	        $_[0]->register_rule($generator, '=', $generator->matcher($_[0]));
+	}
+	
 =head1 Initial Creation
 
 The following perl code was used to set up the main.(pag|dir)
@@ -43,6 +57,7 @@ for the example.
 	tie(my %sub_bodies, 'SDBM_File', __PACKAGE__, O_RDWR|O_CREAT, 0640);
 	$sub_bodies{'yn'} = q{print STDOUT ($_[0] ? 'Yes' : 'No'), "\n";};
 	$sub_bodies{'hello_world'} = q{print "Hello World.\n";};
+	$sub_bodies{'hello_world-prototype'} = q{};
 	$sub_bodies{'hola_mundo'} = q{print "Hola Mundo.\n";};
 	$sub_bodies{'salut_monde'} = q{print "Salut Monde.\n";};
 	

@@ -1,0 +1,47 @@
+=pod
+
+=head1 NAME
+
+Package::Autoloader::Generator::Closures_Demo - example with RE and no quoting
+
+=head1 SYNOPSIS
+
+	#!/usr/bin/perl -W -T
+	use strict;
+	
+	use Package::Autoloader sub{eval shift}, sub {
+		$_[0]->register_rule('::Closures_Demo', '*', 'calc_(\d+)');
+	};
+	
+	sub calc {
+		my ($correction, $a, $b) = @_;
+		return($a * $correction/100 + $b);
+	};
+	
+	package Other;
+	use Package::Autoloader sub{eval shift};
+	
+	print calc_5(7, 8), "\n"; # sets $correction = 5
+	exit(0);
+
+=head1 DESCRIPTION
+
+This generator is an example for two features: regular expressions for subroutine matching and how to avoid quoting when assembling the body text of a subroutine.
+
+The RE 'calc_(\d+)' does what you might expect: a RE m// match.
+
+The 'no quoting' feature is in the generator class and cited here:
+
+		my $sub_text = ... q{
+			my ($fixed_argument) = (shift(@_));
+			...
+		}, ...
+		... $pkg->transport(\$sub_text, $fixed_argument);
+
+This way you can transport information from the defining package or the generator into the requesting package. And vice versa. No serialization and no quoting required.
+
+=head1 ANYTHING ELSE
+
+Please see the documentation of the upstream package L<Package::Autoloader>.
+
+=cut

@@ -5,10 +5,10 @@ package Synopsis;
 use Package::Autoloader sub{eval shift}, sub {
 # you consume rules ----^=============^  ^====^-- you define rules
 
-	$_[0]->register_rule('Hello_Anything', '::*', 'hola_');
-# wildcard ------------------------------------^===^  ^=====^-- sub name
-	$_[0]->register_rule('Hello_Anything', '=', 'salut_');
-# generator class -----------^==============^
+	$_[0]->register_rule('::Hello_Anything', '::*', 'hola_');
+# wildcard --------------------------------------^===^  ^=====^-- sub name
+	$_[0]->register_rule('::Hello_Anything', '=', 'salut_');
+# generator class -----------^================^
 
 	my $yn = q{
  		return(q{print STDOUT ($_[0] ? 'Yes' : 'No'), "\n";});
@@ -16,7 +16,6 @@ use Package::Autoloader sub{eval shift}, sub {
 	};
 	$_[0]->register_rule($yn, '*', 'yn');
 };
-
 
 package Synopsis::Desc1;
 use Package::Autoloader sub{eval shift};

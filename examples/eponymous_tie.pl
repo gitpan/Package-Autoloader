@@ -10,6 +10,7 @@ use Package::Autoloader sub{eval shift};
 # which is 'main' in this case (no package name set)
 Package::Autoloader::again sub{eval shift}, sub {
 	my $generator = Package::Autoloader::Generator::Eponymous_Tie->new($_[0]);
+	$generator->prototypes($_[0]);
 	$_[0]->register_rule($generator, '=', $generator->matcher($_[0]));
 };
 

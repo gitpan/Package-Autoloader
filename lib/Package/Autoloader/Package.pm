@@ -29,7 +29,7 @@ my $autoloadcan = q{
 	}
 };
 
-my $can = q{
+my $potentially_can = q{
 	my $object = shift(@_);
 	sub potentially_can {
 		return($object->potentially_can(@_));
@@ -37,7 +37,7 @@ my $can = q{
 	return(\&potentially_can);
 };
 
-my $defined = q{
+my $potentially_defined = q{
 	my $object = shift(@_);
 	sub potentially_defined(\&) {
 		return($object->potentially_defined(@_));
@@ -99,19 +99,19 @@ sub register_rule {
 		} elsif(blessed($rule)) {
 			$RULES->register_rule($rule, $rule->pre_select);
 		} else {
-			Carp::confess("Not enough arguments to register_rule.");
+			Carp::confess("Wrong type of argument.");
 		}
 		return;
 	}
 
 	my $rule_ref = ref($rule);
 	if ($rule_ref eq '') {
-		if ($rule =~ m,^([\w_]+($|::))+,) {
+		if ($rule =~ m,(^|::)([\w_]+($|::))+,) {
 			my $class;
-			if($rule =~ m,:,) {
-				$class = $rule;
+			if(substr($rule, 0, 2) eq '::') {
+				$class = "Package::Autoloader::Generator$rule";
 			} else {
-				$class = "Package::Autoloader::Generator::$rule";
+				$class = $rule;
 			}
 			# shows the impractical parts of Perl5
 			my $class_for_require = $class;
@@ -174,10 +174,10 @@ sub autoload_generic {
 	return(undef) if ($sub_name eq 'DESTROY');
 #	return(undef) if ($sub_name eq 'AUTOLOAD');
 	if ($sub_name eq 'potentially_can') {
-		return($self->transport(\$can, $self));
+		return($self->transport(\$potentially_can, $self));
 	}
 	if ($sub_name eq 'potentially_defined') {
-		return($self->transport(\$defined, $self));
+		return($self->transport(\$potentially_defined, $self));
 	}
 
 	my $generator;

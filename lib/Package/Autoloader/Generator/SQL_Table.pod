@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-Package::Autoloader::Generator::SQL_Table - 
+Package::Autoloader::Generator::SQL_Table - store your subroutines in a database
 
 =head1 SYNOPSIS
 
@@ -19,6 +19,7 @@ Package::Autoloader::Generator::SQL_Table -
 		my $generator =
 			Package::Autoloader::Generator::SQL_Database
 			->new($_[0], $dbh);
+		$generator->prototypes;
 		$_[0]->register_rule
 			($generator, '=', $generator->matcher($dbh));
 	};
@@ -32,12 +33,16 @@ Package::Autoloader::Generator::SQL_Table -
 
 	yn(defined(&hello_world));
 	exit(0);
-	
-
 
 =head1 DESCRIPTION
 
+The generator can be used to keep the subroutines of a module as rows in a SQL database table. In case your module has a huge number of subroutines, out of which only a few are typically used, keeping the subroutines in an external source might conserve time and memory.
 
+Executes a SQL select statement to identify a suitable subroutine defintion. Control over the database means control over your program.
+
+=head2 Prototypes
+
+Prototype definitions are supported, but have to be explicitely requested. It only makes sense if defining and requesting package are the same (therefore the explicit request). Beside that, the correct prototype might not be known at compile time. However, for AUTOLOADed subroutines the prototype is not checked in Perl5, so for the moment prototypes are pretty much useless.
 
 =head1 SQL STATEMENTS
 
@@ -62,15 +67,16 @@ Package::Autoloader::Generator::SQL_Table -
 		UNIQUE KEY __id (__id)
 	);
 	
-	INSERT INTO _subroutines (sub_name, sub_body, sub_argc) VALUES
-	('yn', 'print STDOUT ($_[0] ? \'Yes\' : \'No\'), "\n";', NULL),
-	('hello_world', 'print "Hello World.\n";', NULL),
-	('hola_mundo', 'print "Hola Mundo.\n";', NULL),
-	('salut_monde', 'print "Salut Monde.\n";', NULL),
-	('hello_world', 'print "Hello World. ($date)\n";', 1),
-	('hola_mundo', 'print "Hola Mundo. ($date)\n";', 1),
-	('salut_monde', 'print "Salut Monde. ($date)\n";', 1);
-	
+	INSERT INTO _subroutines
+	(sub_name, sub_prototype, sub_body, sub_argc) VALUES
+	('yn', '$', 'print STDOUT ($_[0] ? \'Yes\' : \'No\'), "\n";', NULL),
+	('hello_world', NULL, 'print "Hello World.\n";', NULL),
+	('hola_mundo', NULL, 'print "Hola Mundo.\n";', NULL),
+	('salut_monde', NULL, 'print "Salut Monde.\n";', NULL),
+	('hello_world', '$', 'print "Hello World. ($date)\n";', 1),
+	('hola_mundo', '$', 'print "Hola Mundo. ($date)\n";', 1),
+	('salut_monde', '$', 'print "Salut Monde. ($date)\n";', 1);
+		
 =head2 Access to Table
 
 	CREATE DATABASE IF NOT EXISTS perlsub;

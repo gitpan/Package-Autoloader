@@ -46,6 +46,14 @@ sub new {
 }
 
 
+sub prototypes {
+	my ($self, $pkg) = (shift, shift);
+
+	my $file_name = pkg_directory($pkg->name) . '-prototypes.pl';
+	my $code = "require shift(\@_);";
+	$pkg->transport(\$code, $file_name);
+}
+
 sub matcher {
 	my ($self, $pkg) = (shift, shift);
 

@@ -15,6 +15,7 @@ my $date = scalar(localtime(time()));
 
 Package::Autoloader::again sub{eval shift}, sub {
 	my $generator = Package::Autoloader::Generator::SQL_Table->new($_[0], $dbh);
+	$generator->prototypes($_[0], $dbh);
 	$_[0]->register_rule($generator, '=', $generator->matcher($dbh));
 };
 

@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use Carp qw();
 
-our $VERSION = '0.09';
+our $VERSION = '0.10';
 
 use Package::Autoloader::Package;
 my $PACKAGES = {};

@@ -1,0 +1,72 @@
+This file contains message digests of all files listed in MANIFEST,
+signed via the Module::Signature module, version 0.61.
+
+To verify the content in this distribution, first make sure you have
+Module::Signature installed, then type:
+
+    % cpansign -v
+
+It will check each file's integrity, as well as the signature's
+validity.  If "==> Signature verified OK! <==" is not displayed,
+the distribution may already have been compromised, and you should
+not run its Makefile.PL or Build.PL.
+
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA1
+
+SHA1 6084df0c5964424d8a531a62d8440e6bc8f3f92d Changes
+SHA1 4a856e51e9b8c94c7412557c8e707a0c7e45eb26 INSTALL
+SHA1 a592bfc343da17ed35b0ae66d842cfad76081dd4 MANIFEST
+SHA1 30e8dddd4ee374f96507db8f0bf786200f95a860 Makefile.PL
+SHA1 4fff3af0eee52a5ab290031ac58ecb01c98d7be4 README
+SHA1 f220621a1d8db5a35869a551cfa178000dd48edc Todo
+SHA1 1166e2f40cbe4720664a33ddb6ccaa45f9cdecb3 coding_style.txt
+SHA1 3ef2a0578c72fe90be5eb950af4f78b471047cac examples/.synopsis.pl.swp
+SHA1 3ea003e0c64d6fbfe7cc09518c1b46e6238e77f7 examples/DATA_section.pl
+SHA1 95e792949ffb59643c2c8e670b560b2c56d0d881 examples/closures_demo.pl
+SHA1 1e3aceda9dbb9814606fc0a0643e8940d2552a1f examples/eponymous_directory.pl
+SHA1 77216eed69b821fc022f4c9ed0429a1a18711057 examples/eponymous_directory/-prototypes.pl
+SHA1 fdc599c5f534f74c5c47508517128ad71400587e examples/eponymous_directory/hello_world.pl
+SHA1 476cfbf1d3aeb9b49719901adccb183769bbf83e examples/eponymous_directory/yn.pl
+SHA1 c1961ec8a281bcb2547048e5c30ed00c5211878a examples/eponymous_tie.pl
+SHA1 08fe14444e3b7b9fe44b178094a4116b58485398 examples/export.pl
+SHA1 da39a3ee5e6b4b0d3255bfef95601890afd80709 examples/main.dir
+SHA1 cd19404ae81b584d28dcf290d838e717dd27c4a4 examples/main.pag
+SHA1 e7d90751e9a7ad118917b58f23a6290e5c499334 examples/search_path.pl
+SHA1 fc86bb308decb529095a772a5099e925826b8ba5 examples/set_accessors-packaged.pl
+SHA1 a7cf323ff4b137c5eaa511102f92b7bfe4a13496 examples/set_accessors-standalone.pl
+SHA1 2ff85c71f98e728613fe461158692620a120d6bf examples/sql_table.pl
+SHA1 1872d0aaa9363df2d7ef73517aeb9efd2a9cc825 examples/synopsis.pl
+SHA1 7b57218acb3bfd16e6d14347d1b624cb99fb0927 lib/Package/Autoloader.pm
+SHA1 de9930f7d6b85ce9d1a77a9dec9804d3f4746551 lib/Package/Autoloader.pod
+SHA1 0b794d7d5138b863786458f7b79ca388924ab0b4 lib/Package/Autoloader/Generator.pm
+SHA1 ec7614f0b6c6e0d4086858c6ebf3d9ea9af12e36 lib/Package/Autoloader/Generator.pod
+SHA1 31f4a1f371b299f8a4d5dc519e0444a4f5d82769 lib/Package/Autoloader/Generator/Closures_Demo.pm
+SHA1 ff672240c837279a9b01b081e44c26fb6cfcb387 lib/Package/Autoloader/Generator/Closures_Demo.pod
+SHA1 4a923f5e46883d4e139097e3cee5064aaba0a1df lib/Package/Autoloader/Generator/Eponymous_Directory.pm
+SHA1 2b7d6e2026cc23560948313c051db2dfdb3f2940 lib/Package/Autoloader/Generator/Eponymous_Directory.pod
+SHA1 de81edde2b17f178217cbe06d2a551afb19353b7 lib/Package/Autoloader/Generator/Eponymous_Tie.pm
+SHA1 099528cd4b1f027e39133114b8e630bac84fe50a lib/Package/Autoloader/Generator/Eponymous_Tie.pod
+SHA1 f0e259588e928e341a3e18afc240953396c72988 lib/Package/Autoloader/Generator/Export.pm
+SHA1 59099f0eb1cf5efaa856e14d45913ace9e61b3a1 lib/Package/Autoloader/Generator/Export.pod
+SHA1 ce1a71d01822426d316b7f35f4616444fb0a8887 lib/Package/Autoloader/Generator/Hello_Anything.pm
+SHA1 e0c796d7a370e5a95f5f77ee3693389f3809c91d lib/Package/Autoloader/Generator/Hello_Anything.pod
+SHA1 fea41fc5486131c34402036c87a6852aaff8af21 lib/Package/Autoloader/Generator/SQL_Table.pm
+SHA1 8bb35faca9c1bf87827d3153fbc2192810aa29eb lib/Package/Autoloader/Generator/SQL_Table.pod
+SHA1 d9202b7082320974df68f58284a3dc91e9fc79d2 lib/Package/Autoloader/Generator/Set_Accessors_Demo.pm
+SHA1 c3ef69a0b70164ad9b1611b8c932eb50bedbc012 lib/Package/Autoloader/Generator/Set_Accessors_Demo.pod
+SHA1 188e412ae3eb4bfbd15efbdc0a7c12e006e155ea lib/Package/Autoloader/Package.pm
+SHA1 109d0cc34757525226dc4ddd38b7eb364054fdee lib/Package/Autoloader/Path_Partition.pm
+SHA1 6b6e64bcd83c5de8143b22e947ff5bc04ff69abb lib/Package/Autoloader/Pre_Selection.pm
+SHA1 2d46100a14dcf2f4dbd0a580bb83edf037545e5c lib/Package/Autoloader/Rule.pm
+SHA1 64a1c1492c30db5dc85800a6e8bbb3f7dada261a lib/Package/Autoloader/Rule.pod
+SHA1 3caeb3f52ba8fe1c24838f7c172c8f2528af0fcd t/01_warn.t
+SHA1 1e585ad72c4d7cc2900a63d7cc800719a2e9833c t/02_plausibility.t
+SHA1 0d1a2f656f6a4415cd34c6df9d7491ca52d858a8 t/03_basic.t
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2.0.9 (GNU/Linux)
+
+iEYEARECAAYFAkuWj20ACgkQdnhEwsG7x7qBKQCePXAAkKj04zEiGIidyQJTxwh0
+rzwAoNYtPeYp6PLGFgSPbobbuszNV8Nb
+=kCfB
+-----END PGP SIGNATURE-----
