@@ -10,38 +10,33 @@ The following basic example demonstrates how subroutine generation is done and h
 
 	package Synopsis;
 	use Package::Autoloader sub{eval shift}, sub {
-	#     consume rules ----^=============^  ^====^-- define rules
-
-		$_[0]->register_rule('hello_anything', '::*', 'hola_');
-			# wildcard 'Synopsis::*' ------^===^
-
-		$_[0]->register_rule('hello_anything', '=', 'salut_');
-			# anti-wildcard 'Synopsis' ----^=^
+		$_[0]->register_rule('Hello_Anything', '::*', 'hola_');
+		$_[0]->register_rule('Hello_Anything', '=', 'salut_');
 	};
 
-	
 	package Synopsis::Desc1;
 	use Package::Autoloader sub{eval shift};
 	
-	hola__mundo();
-
+	hola__mundo(); # first rule
 	
 	package sisponyS::Desc2;
 	our @ISA = ('Synopsis');
 	use Package::Autoloader sub{eval shift};
 	
 	my $obj = bless( \(my $o = 0), 'sisponyS::Desc2');
-	$obj->salut_monde();
+	$obj->salut_monde(); # second rule
 
 
 The synopsis demonstrates the two things you can do with Package::Autoloader: consume rules and define rules for automatic subroutine generation.
 
-The dynamically generated subroutines greet_mundo and salut_monde print Hello plus the second part of their name to the screen. (The impartial translation is intentional to stress what is happening - this package is not about localisation.) The synopsis makes maximum use of convenience features, which hide the full flexibility of the interface.
+The dynamically generated subroutines greet_mundo and salut_monde print Hello plus the second part of their name to the screen. (The impartial translation is intentional to stress what is happening - this package is not about localisation.) The synopsis makes maximum use of convenience features, which hide the full flexibility of the interface. For more details on what happens above, see the tests for definedness in L<Package::Autoloader::Generator::Hello_Anything>.
 
 
 =head1 WARNING
 
 This is an experimental module. It hasn't been thoroughly tested, making the probability of fatal bugs quiet high. The goal of the release is to document the current development.
+
+Another warning. Security considerations. This package allows you to facilitate different origins for subroutine definitions, which are then passed to eval(). Control over an origin - file system or data base - means control over your program. Keep that in mind to avoid unpleasant surprises.
 
 
 =head1 DESCRIPTION
@@ -49,6 +44,8 @@ This is an experimental module. It hasn't been thoroughly tested, making the pro
 Package::Autoloader supplies packages with subroutine definitions on the fly. It requires individual activation with the sub-eval-shift like shown in the synopsis. This module complements L<Package::Transporter>.
 
 Once a missing subroutine is encountered in a package, Perl's autoload mechanism forwards the request to the autoloader object of the package. The object uses a pre-selection tree to identify suitable rules and checks them for a matching generator. The rules are normally activated during compile time. If one is found, the generator should bring the requested subroutine into existence.
+
+The authors personal guess is an amount up to two dozen modules, which automatically load subroutines in one way or the other. Package::Autoloader is unique in that it takes AUTOLOAD, but gives it back under the hood of a modular interface. It is not meant for any specific purpose other than providing the interface. Any specific functionality can be implemented via generators. See the examples directory for ideas what can be done with it.
 
 
 =head2 Motivation and Background
@@ -132,14 +129,7 @@ The third argument can be either a single subroutine name, an array reference of
 
 =head2 Subroutine Potential
 
-Whether a package has potential for a subroutine can be tested with the utility functions potentially_(can|defined). They can be explicitly activated (e.g. in a parent class). Either globally by setting Package::Autoloader::Package::CANDEFINED=1 or individually by using the following technique:
-
-	package Synopsis::Desc1;
-	use Package::Autoloader sub{eval shift}, sub{
-		$_[0]->potentially_candefinded;
-	};
-
-The dynamic functions take the name of a subroutine (meaning a string) as an argument and return true or false. That makes their use consistent, but different from from their static counterparts 'can' and 'defined'.
+Whether a package has potential for a subroutine can be tested with the utility functions potentially_(can|defined). They are automatically created upon use. The functions take the name of a subroutine (meaning a string) as an argument and return true or false. That makes their use consistent, but different from from their static counterparts 'can' and 'defined'.
 
 	if(potentially_defined('turbo_mode')) ...
 	if($obj->potentially_can('turbo_mode')) ...
@@ -158,117 +148,16 @@ It is actually a fast solution, easy to understand, and with straightforward res
 Every package using Package::Autoloader gets an individual AUTOLOAD subroutine. That appeared to be the most robust approach and allows for a 'use strict' without exceptions.
 
 
-=head1 RULES
-
-From a practical point of view, Package::Autoloader enables you to specify autoloading in terms of modular rules instead of a monolithic AUTOLOAD subroutine. The two rules from the synopsis conveniently hide the full interface for rules. You can specify rules in three ways
-
-=over 8
-
-=item * by giving B<a generator, a wildcard and a subroutine specification> - a minimal rule object will be created;
-
-=item * by giving B<an array holding parameters for new()> - a rule object will be instantiated accordingly;
-
-=item * by giving B<a ready-make rule object> - will be taken as-is.
-
-=back
-
-
-=head2 Rule Details
-
-A rule is a check whether a generator applies to a missing subroutine. Example: a call for Ex::Ample::no_such_thing(7, [8, 9]) will cause these style of checks to occur internally:
-
-	$rule->check('Ex::Ample', 'no_such_thing', 1, 7, [8, 9]);
-
-Included in Package::Autoloader is the general-purpose rule class Package::Autoloader::Rule. To create a rule object for the above example, use it as follows:
-
-	use Package::Autoloader::Rule;
-	my $rule = Package::Autoloader::Rule->new
-		($generator, 'Ex::Ample', 'no_such_thing', 1, '', 'ARRAY');
-
-However, it is not required to specify all details; normally the last item in rule creation is the subroutine name. Note that the standard rule class does not check the values of arguments, but rather the result of ref().
-
-In order to minimize the number of rules to evaluate, they are organized by purpose, package name, and subroutine name. Internally the above rule will be stored in the pre-selection tree under
-
-	'Ex::Ample' => {'no_' => [$rule]}
-
-This detail only needs to be considered when you write your own rules class. See the pre_select attribute in the standard class.
-
-To widen the scope of a hierarchy search rule, shorten the names. Ex:: applies to all package names starting with Ex:: (no wildcard required), Ex::(A|B|C) is recognized as a regular expression and an empty package name applies to all packages. Alternatively you can specify a list of complete names (meaning these won't undergo wildcard interpretation) as an array reference.
-
-Similarly for subroutine names (any kind of search). Specify no_ to match a name starting with no_ (partial subroutine name ending in underscore but no wildcard required), no_(parking|money) is recognized as a regular expression and an empty subroutine name applies to all subroutines. Alternatively you can specify a list of complete names (meaning these won't undergo wildcard interpretation) as an array reference.
-
-
-=head1 Generators
-
-A generator is an anonymous subroutine, which is called with all information its rule check got plus a package object. Valid return values are:
-
-=over 8
-
-=item * B<a string not looking like a complete subroutine definition> - surroundings are added automatically.
-
-=item * B<a string starting with 'sub '> - taken as a complete definition of the missing subroutine and submitted to the eval(). Note that the string should include a return statement for a reference to the subroutine after the definition. 
-
-=item * B<a CODE reference> - assuming the generator already did all necessary steps, the reference is passed to the upper layers, where it will eventually hit the goto &$reference in the autoloader.
-
-=back
-
-
-The first parameter to the generator call is a package object. The generator can use the package object to submit code to the package via ->transport(). While you have access to lexical variables declared before the visit point, you can't create them. Because eval behaves like a block, not like an inline instruction.
-
-There is no general-purpose generator shipped with Package::Autoloader, because that function is covered by Package::Transporter. Autoloader is about demand, Transporter is about supply; they complement each other. Keep in mind that you can't autoload constant functions in Perl. 
-
-A manual crafted generator looks like the following:
-
-	my $generator = sub { 
-		my ($pkg, $sub_name, $argc) = (shift, shift, shift);
-
-		#... do something to create the $sub_ref
-
-		return($sub_ref);
-	};
-
-
-=head2 Generator Classes
-
-Keep your generators in package files so that they are re-usable. It is also the most obvious way to define generators. The Hello_Anything class roughly looks like this:
-
-	package Package::Autoloader::Generator::Hello_Anything;
-	use parent qw(Package::Autoloader::Generator);
-	
-	sub new {
-	        my $generator = sub {
-			my ($pkg, $sub_name, $argc) = (shift, shift, shift);
-
-	                my $sub_body = sprintf(
-				qq{print 'Hello %s\n'},
-				substr($sub_name, 6));
- 			return($sub_body);
-		};
-		bless($generator, __PACKAGE__);
-	}
-
-Although the standard is to generate a subroutine, that behaviour is not mandatory. The generator can simply do what the function is supposed to do and return nothing. 
-
-You want to see the examples directory and the .pm files in Generator.
-
-
 =head1 PUBLIC INTERFACE REFERENCE
 
 The following methods belong to the  public interface of Package::Autoloader::Package.
 
 =over 8
 
-=item B<potentially_candefined>
-
-Activates the two subroutines potentially_can and potentially_defined for the current package.
-
-=item B<$Package::Autoloader::Package::CANDEFINDED>
-
-A package global to activate potentially_candefined for all packages. Please note you have to set it in a BEGIN block.
-
 =item B<register_rule>
 
 Trigger the convenience function as described above.
+
 
 =back
 
@@ -283,7 +172,7 @@ This is an early public release. Also see the Todo file. The documentation can't
 
 =head2 Prototypes
 
-Prototypes checks occors at compile time, when AUTOLOAD isn't considered, yet. Therefore AUTOLOAD wasn't made aware of prototype definitions.
+Prototypes checks occurs at compile time, when AUTOLOAD isn't considered, yet. Therefore AUTOLOAD wasn't made aware of prototype definitions.
 
 Imagine the following situation, where subroutine A calls B and vice versa (so that you can't simply change the order):
 
@@ -296,13 +185,25 @@ Perl can't verify the arguments for the call to B(2, 8), because B is not define
 
 Constant Functions are inlined at compile time, when AUTOLOAD isn't considered, yet. Therefore you can't define constant functions via AUTOLOAD.
 
+=head2 CORE::defined and UNIVERSAL::can
+
+Both are left unmodified, because any re-definition could not be limited in scope. Meaning that a re-definition would cause any package to be unconditionally affected by a 'use Package::Autoloader'. Absolutely not desirable, even if it sounds convenient. Individual AUTOLOAD routines and can methods might appear as unnecessary effort on the first sight, but they're the proper way of doing it.
+
+Beside that, in a modified 'defined' you won't easily get the name of the subroutine it was called with. Example: defined(&some_routine) won't lead to 'some_routine' directly. 
+
+=head2 Common Pitfalls
+
+The statement 'use Package::Autoloader' is executed during compile time. Some things are not available then. Like the DATA file handle or lexical variables. You can use Package::Autoloader::again, see from_database.pl and from_DATA.pl.
+
+Matching subroutine names with '' means that you can generate anything. It's most likely not what you want. Example:
+
+	$_[0]->register_rule('Some_Generator_Class', '=', '');
 
 =head1 AUTHOR
 
 Winfried Trumper E<lt>pub+perl(a)wt.tuxomania.netE<gt>
 
-
-=head1 COPYRIGHT
+=head2 COPYRIGHT
 
 Copyright (C) 2010 Winfried Trumper
 

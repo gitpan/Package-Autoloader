@@ -1,0 +1,96 @@
+=pod
+
+=head1 NAME
+
+Package::Autoloader::Generator::SQL_Table - 
+
+=head1 SYNOPSIS
+
+	use DBI;
+	my $dbh = DBI->connect('DBI:mysql:perlsub', LOGIN, PASSWORD)
+	|| Carp::confess("connect: $DBI::errstr\n");
+	
+	# a lexical variable visible to hello_world()
+	my $date = scalar(localtime(time()));
+	
+	use Package::Autoloader;
+	Package::Autoloader::again sub{eval shift}, sub {
+		use Package::Autoloader::Generator::SQL_Database;
+		my $generator =
+			Package::Autoloader::Generator::SQL_Database
+			->new($_[0], $dbh);
+		$_[0]->register_rule
+			($generator, '=', $generator->matcher($dbh));
+	};
+	
+	yn(!potentially_defined('hello_worlds'));
+	yn(potentially_defined('hello_world'));
+	yn(!defined(&hello_world));
+
+	#hello_world(7); # try this to see $date
+	hello_world();
+
+	yn(defined(&hello_world));
+	exit(0);
+	
+
+
+=head1 DESCRIPTION
+
+
+
+=head1 SQL STATEMENTS
+
+=head2 Database Creation
+
+	CREATE DATABASE IF NOT EXISTS perlsub;
+	USE perlsub;
+
+=head2 Table Creation
+
+	DROP TABLE IF EXISTS _subroutines;
+	CREATE TABLE _subroutines (
+		sub_event enum('on_load', 'on_demand') NOT NULL default 'on_demand',
+		sub_package varchar(255),
+		sub_argc int,
+		sub_signature varchar(255),
+		sub_name varchar(255) NOT NULL,
+		sub_prototype varchar(255),
+		sub_body text NOT NULL,
+		__id int(10) unsigned NOT NULL auto_increment,
+		PRIMARY KEY (__id),
+		UNIQUE KEY __id (__id)
+	);
+	
+	INSERT INTO _subroutines (sub_name, sub_body, sub_argc) VALUES
+	('yn', 'print STDOUT ($_[0] ? \'Yes\' : \'No\'), "\n";', NULL),
+	('hello_world', 'print "Hello World.\n";', NULL),
+	('hola_mundo', 'print "Hola Mundo.\n";', NULL),
+	('salut_monde', 'print "Salut Monde.\n";', NULL),
+	('hello_world', 'print "Hello World. ($date)\n";', 1),
+	('hola_mundo', 'print "Hola Mundo. ($date)\n";', 1),
+	('salut_monde', 'print "Salut Monde. ($date)\n";', 1);
+	
+=head2 Access to Table
+
+	CREATE DATABASE IF NOT EXISTS perlsub;
+	GRANT SELECT ON perlsub.* TO autoloader@localhost
+		IDENTIFIED BY __PASSWORD__;
+	
+=head2 Query For Subroutines
+
+	SELECT sub_prototype, sub_body
+	FROM _subroutines
+	WHERE (sub_name = ?)
+	AND (sub_event = 'on_demand')
+	AND ((sub_package = ?) OR ISNULL(sub_package))
+	AND ((sub_argc = ?) OR ISNULL(sub_argc))
+	ORDER BY sub_package DESC, sub_argc DESC
+	LIMIT 1
+	
+
+=head1 ANYTHING ELSE
+
+Please see the documentation of the upstream package L<Package::Autoloader>.
+
+=cut

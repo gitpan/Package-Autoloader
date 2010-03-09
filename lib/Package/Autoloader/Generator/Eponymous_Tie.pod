@@ -1,0 +1,53 @@
+=pod
+
+=head1 NAME
+
+Package::Autoloader::Generator::Eponymous_Tie
+
+=head1 SYNOPSIS
+
+	use strict;
+	Package::Autoloader::again sub{eval shift}, sub {
+		$_[0]->register_rule('Eponymous_Tie', '=', undef);
+	};
+	
+	yn(potentially_defined('hello_worlds'));
+	yn(potentially_defined('hello_world'));
+	yn(defined(&hello_world));
+
+	hello_world();
+
+	yn(defined(&hello_world));
+	exit(0);
+	
+
+=head1 DESCRIPTION
+
+Eponymous means the same name. This generator uses the subroutine name as a key to a DB-file with the same base name as the package file. Example:
+
+	Package: The::Requesting::Package
+	Package File: /opt/perl5/5.10.0/The/Requesting/Package.pm
+
+	DB File: /opt/perl5/5.10.0/The/Requesting/Package.(pag|dir);
+
+The generator extracts all keys from the DB-file and uses that for rule matches. Newly added keys will only be seen on the next start of the program.
+
+=head1 Initial Creation
+
+The following perl code was used to set up the main.(pag|dir)
+for the example.
+
+	# thisis now main.pag was created:
+	use SDBM_File;
+	use Fcntl;
+	tie(my %sub_bodies, 'SDBM_File', __PACKAGE__, O_RDWR|O_CREAT, 0640);
+	$sub_bodies{'yn'} = q{print STDOUT ($_[0] ? 'Yes' : 'No'), "\n";};
+	$sub_bodies{'hello_world'} = q{print "Hello World.\n";};
+	$sub_bodies{'hola_mundo'} = q{print "Hola Mundo.\n";};
+	$sub_bodies{'salut_monde'} = q{print "Salut Monde.\n";};
+	
+=head1 ANYTHING ELSE
+
+Please see the documentation of the upstream package L<Package::Autoloader>.
+
+=cut

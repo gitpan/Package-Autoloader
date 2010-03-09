@@ -1,3 +1,8 @@
+0.09	08 March 2010
+	- ready-made matcher subroutines can be passed to register_rule
+	- example generator to AUTOLOAD from a SQL database
+	- separate pod files for rules and generators
+
 0.08	07 March 2010
 	- stuff it with convenience until it goes boom ;)
 	- Generators as a separate class

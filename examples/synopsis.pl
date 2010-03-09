@@ -32,12 +32,13 @@ our @ISA = ('Synopsis');
 use Package::Autoloader sub{eval shift};
 
 my $obj = bless( \(my $o = 0), 'sisponyS::Desc2');
+sub prints {};
 
 yn(!potentially_defined('hola__mundo'));
 yn(!defined(&salut_monde));
 yn(!potentially_defined('salut_monde'));
-yn(!$obj->can('salut_monde'));
-yn($obj->potentially_can('salut_monde'));
+yn($obj->can('salut_monde'));
+yn($obj->can('prints'));
 
 $obj->salut_monde();
 

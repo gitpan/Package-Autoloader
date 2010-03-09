@@ -14,7 +14,7 @@ sub new {
 	my ($class, $defining_pkg) = (shift, shift);
 
 	my $generator = sub {
-		my ($pkg, $sub_name, $argc) = (shift, shift, shift);
+		my ($pkg, $sub_name) = (shift, shift);
 		my $argument = substr($sub_name, 5) || 100;
 		my $sub_text = sprintf(q{
 my ($calc_generic, $arg1) = (shift(@_), shift(@_));

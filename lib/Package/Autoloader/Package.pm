@@ -2,10 +2,8 @@ package Package::Autoloader::Package;
 use strict;
 use warnings;
 use Carp qw();
-use Scalar::Util qw(blessed);
+use Scalar::Util qw();
 use mro qw();
-
-our $CANDEFINED = 0;
 
 sub ATB_PKG_NAME() { 0 };
 sub ATB_VISIT_POINT() { 1 };
@@ -18,7 +16,7 @@ use Package::Autoloader::Path_Partition;
 use Package::Autoloader::Generator;
 my $RULES = Package::Autoloader::Pre_Selection->new(); 
 
-my $autoload = q{
+my $autoloadcan = q{
 	my $object = shift(@_);
 
 	our $AUTOLOAD;
@@ -26,19 +24,22 @@ my $autoload = q{
 		my $sub_ref = $object->autoload_generic($AUTOLOAD, @_);
 		goto &$sub_ref if (defined($sub_ref));
 	}
+	sub can {
+		return(UNIVERSAL::can(@_) // $object->can_already(@_));
+	}
 };
+
 my $can = q{
 	my $object = shift(@_);
 	sub potentially_can {
-		return(defined(UNIVERSAL::can(@_))
-		|| $object->potentially_can(@_));
+		return($object->potentially_can(@_));
 	}
 	return(\&potentially_can);
 };
 
 my $defined = q{
 	my $object = shift(@_);
-	sub potentially_defined {
+	sub potentially_defined(\&) {
 		return($object->potentially_defined(@_));
 	}
 	return(\&potentially_defined);
@@ -55,8 +56,7 @@ sub new {
 	bless($self, $class);
 	Internals::SvREADONLY(@{$self}, 1);
 
-	$self->transport(\$autoload, $self);
-	$self->potentially_candefined if ($CANDEFINED);
+	$self->transport(\$autoloadcan, $self);
 
 	return($self);
 }
@@ -64,12 +64,6 @@ sub new {
 sub name { return($_[0][ATB_PKG_NAME]); };
 
 sub search { return($_[0][ATB_PATH_PARTITION]); };
-
-sub potentially_candefined {
-	$_[0]->transport(\$can, $_[0]);
-	$_[0]->transport(\$defined, $_[0]);
-	return;
-}
 
 sub set_visit_point {
 	$_[0][ATB_VISIT_POINT] = $_[1];
@@ -98,6 +92,18 @@ sub transport {
 sub register_rule {
 	my ($self, $rule) = (shift, shift);
 
+	if(scalar(@_) == 0) { # no further arguments
+		if (ref($rule) eq 'ARRAY') {
+			$rule = Package::Autoloader::Rule->new(@$rule);
+			$RULES->register_rule($rule, $rule->pre_select);
+		} elsif(blessed($rule)) {
+			$RULES->register_rule($rule, $rule->pre_select);
+		} else {
+			Carp::confess("Not enough arguments to register_rule.");
+		}
+		return;
+	}
+
 	my $rule_ref = ref($rule);
 	if ($rule_ref eq '') {
 		if ($rule =~ m,^([\w_]+($|::))+,) {
@@ -114,7 +120,6 @@ sub register_rule {
 			#local $!; # isn't this handled inside require?
 			require $class_for_require;
 			$rule = $class->new($self);
-			$rule_ref = 'Package::Autoloader::Generator';
 		} else {
 			my $code = sprintf(q{
 sub($$;@) {
@@ -124,18 +129,13 @@ sub($$;@) {
 			local $@;
 			$rule = eval $code;
 			Carp::confess($@) if ($@);
-			$rule_ref = 'CODE';
-		}
-	}
-
-	if ($rule_ref eq 'CODE') {
-		if(ref($rule) eq 'CODE') {
 			bless($rule, 'Package::Autoloader::Generator');
 		}
-		$rule_ref = 'Package::Autoloader::Generator';
+	} elsif ($rule_ref eq 'CODE') {
+		bless($rule, 'Package::Autoloader::Generator');
 	}
 
-	if($rule_ref eq 'Package::Autoloader::Generator') {
+	if(Scalar::Util::blessed($rule) and $rule->can('run')) {
 		my @pkg_names = ($self->[ATB_PKG_NAME]);
 		my $wildcard = shift;
 		if ($wildcard eq '=') {
@@ -149,15 +149,16 @@ sub($$;@) {
 		} else {
 			Carp::confess("Don't know what to do with wildcard '$wildcard'.\n");
 		}
-		my $rule = Package::Autoloader::Rule->new(
+
+		unless(defined($_[0])) {
+			if($rule->can('matcher')) {
+				$_[0] = $rule->matcher($self);
+			}
+		}
+
+		my $real_rule = Package::Autoloader::Rule->new(
 			$rule, \@pkg_names, @_);
-		$RULES->register_rules($rule, $rule->pre_select);
-	} elsif ($rule_ref eq 'ARRAY') {
-		my $rule = Package::Autoloader::Rule->new(@$rule);
-		$RULES->register_rule($rule, $rule->pre_select);
-	} else {
-		Carp::confess;
-		$RULES->register_rule($rule, $rule->pre_select);
+		$RULES->register_rules($real_rule, $real_rule->pre_select);
 	}
 
 	return;
@@ -180,7 +181,7 @@ sub autoload_generic {
 	}
 
 	my $generator;
-	if (blessed($_[0])) {
+	if (Scalar::Util::blessed($_[0])) {
 		my $ISA = mro::get_linear_isa($pkg_name);
 		($self, $generator) = Package::Autoloader::find_generator($ISA, $sub_name, @_);
 	} else {
@@ -198,6 +199,15 @@ sub find_generator {
 		$_[0][ATB_SEARCH_PATH],
 		$_[0][ATB_PKG_NAME],
 		$_[1], @_));
+}
+
+sub can_already {
+	my ($self) = (shift);
+
+	my $ISA = mro::get_linear_isa($self->[ATB_PKG_NAME]);
+	my ($pkg, $generator) = Package::Autoloader::find_generator($ISA, $_[1], $_[0]);
+	return unless(defined($generator));
+	return($generator->run($pkg, $self->[ATB_PKG_NAME], $_[1], @_));
 }
 
 sub potentially_can {

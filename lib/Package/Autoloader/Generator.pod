@@ -1,0 +1,89 @@
+=pod
+
+=head1 NAME
+
+Package::Autoloader::Generator - generic base class for subroutine generators
+
+=head1 SYNOPSIS
+
+	use Package::Autoloader::Generator;
+
+	my $generator = sub {
+		sprintf(qq{print 'Hello %s\n'}, substr($_[1], 6));
+	};
+	bless($generator, 'Package::Autoloader::Generator');
+
+
+=head1 DESCRIPTION
+
+A generator is a blessed anonymous subroutine, which is called with all information its rule check got plus a package object. Valid return values are:
+
+=over 8
+
+=item * B<a string not looking like a complete subroutine definition> - surroundings are added automatically.
+
+=item * B<a string starting with 'sub '> - taken as a complete definition of the missing subroutine and submitted to the eval(). Note that the string should include a return statement for a reference to the subroutine after the definition. 
+
+=item * B<a CODE reference> - assuming the generator already did all necessary steps, the reference is passed to the upper layers, where it will eventually hit the goto &$reference in the autoloader.
+
+=back
+
+
+The first parameter to the generator call is a package object. The generator can use the package object to submit code to the package via ->transport(). While you have access to lexical variables declared before the visit point, you can't create them. Because eval behaves like a block, not like an inline instruction.
+
+There is no general-purpose generator shipped with Package::Autoloader, because that function is covered by Package::Transporter. Autoloader is about demand, Transporter is about supply; they complement each other. Keep in mind that you can't autoload constant functions in Perl. 
+
+A manual crafted generator looks like the following:
+
+	my $generator = sub { 
+		my ($pkg, $sub_name, $argc) = (shift, shift, shift);
+
+		#... do something to create the $sub_ref
+
+		return($sub_ref);
+	};
+
+
+=head2 Generator Classes
+
+Keep your generators in package files so that they are re-usable. It is also the most obvious way to define generators. The Hello_Anything class roughly looks like this:
+
+	package Package::Autoloader::Generator::Hello_Anything;
+	use parent qw(Package::Autoloader::Generator);
+	
+	sub new {
+	        my $generator = sub {
+			my ($pkg, $sub_name, $argc) = (shift, shift, shift);
+
+	                my $sub_body = sprintf(
+				qq{print 'Hello %s\n'},
+				substr($sub_name, 6));
+ 			return($sub_body);
+		};
+		bless($generator, __PACKAGE__);
+	}
+
+Although the standard is to generate a subroutine, that behaviour is not mandatory. The generator can simply do what the function is supposed to do and return nothing. 
+
+You want to see the examples directory and the .pm files in Generator.
+
+
+=head1 PUBLIC METHODS
+
+The following methods belong to the  public interface of Package::Autoloader::Package.
+
+=over 8
+
+=item B<run>
+
+Generate the subroutine.
+
+
+=back
+
+
+=head1 ANYTHING ELSE
+
+Please see the documentation of the upstream package L<Package::Autoloader>.
+
+=cut

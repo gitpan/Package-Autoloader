@@ -9,7 +9,7 @@ sub new {
 	my ($class, $defining_pkg) = (shift, shift);
 
         my $generator = sub {
-		my ($pkg, $sub_name, $argc) = (shift, shift, shift);
+		my ($pkg, $sub_name) = (shift, shift);
 
                 my $name = substr($sub_name, 4);
                 my $sub_text = sprintf(q{

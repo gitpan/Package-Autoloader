@@ -1,0 +1,46 @@
+=pod
+
+=head1 NAME
+
+Package::Autoloader::Generator::Eponymous_Directory
+
+=head1 SYNOPSIS
+
+	use strict;
+	use lib '.'; # allows the .pl files to be read via require()
+	
+	package eponymous_directory;
+	
+	use Package::Autoloader sub{eval shift}, sub {
+		$_[0]->register_rule('Eponymous_Directory', '=', undef);
+	};
+	
+	yn(potentially_defined('hello_worlds'));
+	yn(potentially_defined('hello_world'));
+	yn(defined(&hello_world));
+	
+	hello_world();
+	
+	yn(defined(&hello_world));
+	exit(0);
+	
+
+=head1 DESCRIPTION
+
+Eponymous means the same name. This generator tries to require() files of the same name as the subroutine from the directory of the same name as the package file. Example:
+
+	Subroutine: hello_world
+	Package: The::Requesting::Package
+	Package File: /opt/perl5/5.10.0/The/Requesting/Package.pm
+	Result:
+	require('/opt/perl5/5.10.0/The/Requesting/Package/hello_world.pl');
+
+The generator makes a listing of the directory and uses that for rule matches. Newly added .pl files will only be seen on the next start of the program.
+
+Because of the require(), taint checks and untainting comes in for free.
+
+=head1 ANYTHING ELSE
+
+Please see the documentation of the upstream package L<Package::Autoloader>.
+
+=cut

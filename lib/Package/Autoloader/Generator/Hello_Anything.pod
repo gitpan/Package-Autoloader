@@ -1,0 +1,65 @@
+=pod
+
+=head1 NAME
+
+Package::Autoloader::Generator::Hello_Anything - full example from synopsis
+
+=head1 SYNOPSIS
+
+	use strict;
+	
+	package Synopsis;
+	use Package::Autoloader sub{eval shift}, sub {
+	
+		$_[0]->register_rule('Hello_Anything', '::*', 'hola_');
+		$_[0]->register_rule('Hello_Anything', '=', 'salut_');
+	
+		my $yn = q{
+	 		return(q{print STDOUT ($_[0] ? 'Yes' : 'No'), "\n";});
+		};
+		$_[0]->register_rule($yn, '*', 'yn');
+	};
+	
+	
+	package Synopsis::Desc1;
+	use Package::Autoloader sub{eval shift};
+	
+	yn(!defined(&hola__mundo));
+	yn(potentially_defined('hola__mundo'));
+
+	hola__mundo();
+
+	yn(defined(&hola__mundo));
+	
+	
+	package sisponyS::Desc2;
+	our @ISA = ('Synopsis');
+	use Package::Autoloader sub{eval shift};
+	
+	my $obj = bless( \(my $o = 0), 'sisponyS::Desc2');
+	
+	yn(!potentially_defined('hola__mundo'));
+	yn(!defined(&salut_monde));
+	yn(!potentially_defined('salut_monde'));
+	yn($obj->can('salut_monde'));
+	
+	$obj->salut_monde();
+	
+	yn(!defined(&sisponyS::Desc2::salut_monde));
+	yn(!defined(&Synopsis::Desc1::salut_monde));
+	yn(defined(&Synopsis::salut_monde));
+	exit(0);
+
+
+=head1 DESCRIPTION
+
+This generator class was only designed to provide an example for the synopsis of
+Package::Autoloader. Some boolean tests have been added for this version to document the behaviour in detail. All yn-tests should return 'Yes'.
+
+The last paragraph of tests should remind you that the method salut_monde springs into existence as a subroutine in the parent class, because it is defined there only.
+
+=head1 ANYTHING ELSE
+
+Please see the documentation of the upstream package L<Package::Autoloader>.
+
+=cut
