@@ -3,7 +3,8 @@ use strict;
 use warnings;
 use Carp qw();
 use Scalar::Util qw();
-use mro qw();
+#use MRO::Compat;
+use mro;
 
 sub ATB_PKG_NAME() { 0 };
 sub ATB_VISIT_POINT() { 1 };
@@ -182,7 +183,7 @@ sub autoload {
 
 	my $generator;
 	if (Scalar::Util::blessed($_[0])) {
-		my $ISA = mro::get_linear_isa($pkg_name);
+		my $ISA = get_linear_isa($pkg_name);
 		($self, $generator) = Package::Autoloader::find_generator($ISA, $sub_name, @_);
 	} else {
 		$generator = $self->find_generator($sub_name, @_);

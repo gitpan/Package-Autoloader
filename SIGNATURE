@@ -14,14 +14,13 @@ not run its Makefile.PL or Build.PL.
 -----BEGIN PGP SIGNED MESSAGE-----
 Hash: SHA1
 
-SHA1 1748a565bc979bd457375a75e028ace19138047f Changes
-SHA1 4a856e51e9b8c94c7412557c8e707a0c7e45eb26 INSTALL
-SHA1 34b882d93ce6a50f9e80c8dd153712aa0ad4d74b MANIFEST
+SHA1 65fae6362c71028e584eeb16139a56ce2a44577e Changes
+SHA1 9cdb21d4debe90ff1d40ac54cdca40b17df46f23 INSTALL
+SHA1 ea4173b422fe2acfaec529078d793e54c1ff2f48 MANIFEST
 SHA1 18f8bdbb04015e3fd6de7f2c70f71f033628e8b0 Makefile.PL
-SHA1 4fff3af0eee52a5ab290031ac58ecb01c98d7be4 README
-SHA1 5c022d837da4c5b683b9640be35087b0caf6720a Todo
+SHA1 7694b2d1540169e9214afa98715a4e2e09aed2ef README
+SHA1 2cafc6b007a71714ea6288ffa4bf2c723854b418 Todo
 SHA1 1166e2f40cbe4720664a33ddb6ccaa45f9cdecb3 coding_style.txt
-SHA1 3ef2a0578c72fe90be5eb950af4f78b471047cac examples/.synopsis.pl.swp
 SHA1 aec6b2ef1a23130a05d984bc853c1d5271ffdd48 examples/DATA_section.pl
 SHA1 f3c448e738e3fff5486f6fe738e25570f20e2187 examples/closures_demo.pl
 SHA1 d2973ce416e59e0dae93f5857bfada5cf5bd7f24 examples/eponymous_directory.pl
@@ -37,8 +36,8 @@ SHA1 bac1da669743f1da91385dbde0cafbe780e536c7 examples/set_accessors-packaged.pl
 SHA1 e4dd1b39c4f0e454e743ddf52499b261219254c6 examples/set_accessors-standalone.pl
 SHA1 b575ac72724196c45c5081df541210a51be5d405 examples/sql_table.pl
 SHA1 ba4e75cfad1f44bd86ca8ba3ed012d37f63f0051 examples/synopsis.pl
-SHA1 d7b8e3ba3c99ca5728f5d1daa7fca1400461e1d3 lib/Package/Autoloader.pm
-SHA1 f343714ba1a91bb1c85d149af34e45e2a41799d2 lib/Package/Autoloader.pod
+SHA1 6a664ea68fcc403f618baa06b51c1ae2e6a9f09d lib/Package/Autoloader.pm
+SHA1 8aef23935bad5156b0942ed0baee66cc82b6cca8 lib/Package/Autoloader.pod
 SHA1 2074091761e3455e3b10ef7df6f5f2f5a2198da7 lib/Package/Autoloader/Generator.pm
 SHA1 ec7614f0b6c6e0d4086858c6ebf3d9ea9af12e36 lib/Package/Autoloader/Generator.pod
 SHA1 a8b2d97a7bd5b9dcf9c4088865f146d6c60b8ee2 lib/Package/Autoloader/Generator/Closures_Demo.pm
@@ -50,26 +49,26 @@ SHA1 5c0a39c07f6cc06633cb40eaa0f262cd51f6cf02 lib/Package/Autoloader/Generator/E
 SHA1 5ec1205292219a4bd2313b86bb0926f2f6b9de47 lib/Package/Autoloader/Generator/Export.pm
 SHA1 f4034d7003e7945673345d5347ba3ae9b2710788 lib/Package/Autoloader/Generator/Export.pod
 SHA1 2dde6ab30b908a39e4526ccea11e1200aa9a3b33 lib/Package/Autoloader/Generator/Hello_Anything.pm
-SHA1 e0c796d7a370e5a95f5f77ee3693389f3809c91d lib/Package/Autoloader/Generator/Hello_Anything.pod
+SHA1 39a68e03115e805de97df6decf24f96e439ff331 lib/Package/Autoloader/Generator/Hello_Anything.pod
 SHA1 f6ab548992e620e0500399da3153d68f9420d2be lib/Package/Autoloader/Generator/SQL_Table.pm
 SHA1 ea81e5e37ca4e387f679b96e7e46331e54fab8c9 lib/Package/Autoloader/Generator/SQL_Table.pod
 SHA1 4d8b23f77e5af28adeb830aa7acd13995214bc00 lib/Package/Autoloader/Generator/Set_Accessors_Demo.pm
-SHA1 0e7bcb9523e7381c575e9bd785f7073ee1fb2635 lib/Package/Autoloader/Generator/Set_Accessors_Demo.pod
-SHA1 c8f06a831e3f7724058bac6e1da19af0c2c6fafb lib/Package/Autoloader/Package.pm
+SHA1 c317d6b3e3f64cb86a1b42f5c09eb78be154ed82 lib/Package/Autoloader/Generator/Set_Accessors_Demo.pod
+SHA1 b0dc0ec8cc5e0164a196838265a4e34586c4d504 lib/Package/Autoloader/Package.pm
 SHA1 ec5e4a013a1b421258b13b9c10bb3eff87313da8 lib/Package/Autoloader/Path_Partition.pm
 SHA1 da2c665ad50c43395cfb722cd015692c7b188e15 lib/Package/Autoloader/Path_Partition.pod
 SHA1 a9c6cfc2ba8e4dc9e2e27ebebb0db8e69565da28 lib/Package/Autoloader/Pre_Selection.pm
 SHA1 baec010f280292632b5d33d877d63bc10769f9c9 lib/Package/Autoloader/Rule.pm
 SHA1 64a1c1492c30db5dc85800a6e8bbb3f7dada261a lib/Package/Autoloader/Rule.pod
 SHA1 0cca6f5dd8537bc239b709fd772ecabaf3d0fd34 t/01_warn.t
-SHA1 7d2e2099848f27d20e57b6a0e6e02444920d1ef7 t/02_plausibility.t
+SHA1 8b60f9cbf773e3688f61892c61ba9d2292265101 t/02_plausibility.t
 SHA1 8fa7a8c748f13c95b7cab06c8598360148059e36 t/03_basic.t
 SHA1 1230195a27685ed83f9f15bd1003cb0e85e55e5f t/04_path_partition.t
 SHA1 73d00cf6644a2c03beede42fc17df08ba1aa95bb t/05_pre_selection.t
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v2.0.9 (GNU/Linux)
 
-iEYEARECAAYFAkuYFoYACgkQdnhEwsG7x7qG4gCfaiS7k+8X708TzjDVpxAWW+6z
-L2MAoI78+vNgNnQPYwnq+7KiyScV37IY
-=DSe8
+iEYEARECAAYFAkuYKyEACgkQdnhEwsG7x7phLgCgl8VZQghOoRUM2e/tADJ5WcOU
+Uq8An2z8t3z1VQtHAbU7mUkO3Vs3aQsG
+=xR5K
 -----END PGP SIGNATURE-----

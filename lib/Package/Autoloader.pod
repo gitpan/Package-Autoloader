@@ -6,7 +6,7 @@ Package::Autoloader - a modular and OO-aware interface to AUTOLOAD
 
 =head1 SYNOPSIS
 
-The following code registers two rules for use by AUTOLOAD. It demonstrates the tasks you can address with Package::Autoloader: consume rules and define rules for automatic subroutine generation. All yes-no-tests are written to print 'Yes'.
+The following code registers two rules for use by AUTOLOAD. It demonstrates the tasks you can address with Package::Autoloader: consume rules and define rules for automatic subroutine generation.
 
 
 	package Synopsis;
@@ -21,12 +21,7 @@ The following code registers two rules for use by AUTOLOAD. It demonstrates the 
 	package Synopsis::Desc1;
 	use Package::Autoloader sub{eval shift};
 	
-	yn(!defined(&hello_world));
-	yn(potentially_defined('hello_world'));
-	
 	hello_world(); # first rule
-	
-	yn(defined(&hello_world));
 	
 	
 	package sisponyS::Desc2;
@@ -34,33 +29,13 @@ The following code registers two rules for use by AUTOLOAD. It demonstrates the 
 	use Package::Autoloader sub{eval shift};
 	
 	my $obj = bless( \(my $o = 0), 'sisponyS::Desc2');
-	
-	yn(!potentially_defined('hello_world')); # name is sisponyS::
-	yn(!defined(&salut_monde));
-	yn(!potentially_defined('salut_monde'));
-	yn($obj->potentially_can('salut_monde')); # no autovivification
-	yn($obj->can('salut_monde')); # with autovivification
-	
 	$obj->salut_monde(); # second rule
-	
-	yn(!defined(&sisponyS::Desc2::salut_monde));
-	yn(!defined(&Synopsis::Desc1::salut_monde));
-	yn(defined(&Synopsis::salut_monde));
-	
-	package main;
-	use Package::Autoloader sub{eval shift}, sub {
-		my $yn = q{
-	 		return(q{print STDOUT ($_[0] ? 'Yes' : 'No'), "\n";});
-		};
-		$_[0]->register_rule($yn, '*', 'yn');
-	};
-	
 	exit(0);
 
 
-Code examples in this document can be found as separate Perl files in the examples directory.
+To check your understanding of what is happending above, see the tests for definedness in the documentation of L<Package::Autoloader::Generator::Hello_Anything>. Code from the documentation can be found in individual Perl files in the examples directory.
 
-The dynamically generated subroutine salut_monde print Hello plus the second part of its name to the screen. (The impartial translation is intentional to stress what is happening - this package is not about localisation.) The synopsis makes maximum use of convenience features, which hide the full flexibility of the interface. For more details on what happens above, see the tests for definedness in L<Package::Autoloader::Generator::Hello_Anything>.
+The dynamically generated subroutine salut_monde print Hello plus the second part of its name to the screen. (The impartial translation is intentional to stress what is happening - this package is not about localisation.) The synopsis makes maximum use of convenience features, which hide the full flexibility of the interface. 
 
 
 =head1 WARNING
@@ -203,6 +178,11 @@ The statement 'use Package::Autoloader' is executed during compile time. Some th
 Matching subroutine names with '' means that you promise to generate anything. It's most likely not what you want. Example:
 
 	$_[0]->register_rule('Some_Generator_Class', '=', '');
+
+=head2 Perl before 5.10
+
+Uncommment the line with 'use MRO::Compat' and comment the one with 'use mro' to make Package::Autoloader work with older versions of Perl5.
+
 
 =head2 Prototypes
 

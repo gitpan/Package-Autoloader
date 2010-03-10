@@ -4,7 +4,7 @@ Priority:
 
 Nice-to-have:
 	- tracing/logging feature to document who defined and who used what
-
+	- find out how 'use MRO::Compat;' could automatically be added for older Perls
 
 ----------------------------------- ------ ------ ------ ------ ------ ------
 File                                  stmt   bran   cond    sub   time  total

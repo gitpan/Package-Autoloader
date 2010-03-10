@@ -1,6 +1,10 @@
 #!/usr/bin/perl -W -T
 use strict;
-use Test::Simple tests => 10;
+use Test::Simple tests => 11;
+
+local($@);
+eval qq{hello_world();};
+ok($@ !~ m/Package::Autoloader/, 'T000: Not us, yet.');
 
 package Basic_Test1;
 use Test::Simple;
@@ -21,7 +25,7 @@ use Test::Simple;
 
 local($@);
 eval q{Package::Autoloader->import(sub{eval shift}, []);};
-ok($@, 'T004: 2nd argument must be code reference.');
+ok($@, 'T005: 2nd argument must be code reference.');
 
 package Basic_Test3;
 use Test::Simple;
@@ -32,20 +36,20 @@ my $a = time;
 	my $pkg = Package::Autoloader->new(sub{eval shift});
 	my $code = 'return($a)';
 	my $b = $pkg->transport(\$code);
-	ok($a = $b, 'T005: Access lexical via new');
+	ok($a = $b, 'T006: Access lexical via new');
 	local($@);
 	eval q{$pkg->transport($code);};
-	ok($@, 'T006: Normal scalar for transport is error.');
+	ok($@, 'T007: Normal scalar for transport is error.');
 	eval q{$pkg->transport();};
-	ok($@, 'T007: Empty transport is error.');
+	ok($@, 'T008: Empty transport is error.');
 }
 
 my $found = Package::Autoloader::find_generator(['*']);
-ok(!defined($found), 'T008: Impossible ISA value');
+ok(!defined($found), 'T009: Impossible ISA value');
 
 use Package::Autoloader::Rule;
 my $rule = Package::Autoloader::Rule->new(sub{}, '', '');
 ok(ref($rule) eq 'Package::Autoloader::Rule',
-	'T009: Package::Autoloader::Rule works.');
+	'T010: Package::Autoloader::Rule works.');
 
 exit(0);

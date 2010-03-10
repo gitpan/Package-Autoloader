@@ -1,3 +1,7 @@
+0.12	11 March 2010
+	- cosmetic changes to the documentation
+	- mentions MRO::Compat as an option for older versions of Perl
+
 0.11	10 March 2010
 	- unified error message upon failure; ressembles Perl's
 	- failure function in Generator class

@@ -1,4 +1,4 @@
-Package::Autoloader - modular wrapper for 'AUTOLOAD' with dynamic export
+Package::Autoloader - a modular and OO-aware interface to AUTOLOAD
 
 This is an experimental module and in relation to its complexity there
 are not enough tests available to consider it ready for general

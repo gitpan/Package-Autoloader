@@ -1,6 +1,5 @@
 Changes
 coding_style.txt
-examples/.synopsis.pl.swp
 examples/closures_demo.pl
 examples/DATA_section.pl
 examples/eponymous_directory.pl

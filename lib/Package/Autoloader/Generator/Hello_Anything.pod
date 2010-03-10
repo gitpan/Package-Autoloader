@@ -6,30 +6,27 @@ Package::Autoloader::Generator::Hello_Anything - full example from synopsis
 
 =head1 SYNOPSIS
 
-	use strict;
-	
+The following code registers two rules for use by AUTOLOAD. It demonstrates the tasks you can address with Package::Autoloader: consume rules and define rules for automatic subroutine generation. All yes-no-tests are written to print 'Yes'.
+
+
 	package Synopsis;
 	use Package::Autoloader sub{eval shift}, sub {
-	
-		$_[0]->register_rule('Hello_Anything', '::*', 'hola_');
-		$_[0]->register_rule('Hello_Anything', '=', 'salut_');
-	
-		my $yn = q{
-	 		return(q{print STDOUT ($_[0] ? 'Yes' : 'No'), "\n";});
-		};
-		$_[0]->register_rule($yn, '*', 'yn');
+		$_[0]->register_rule('::Export', '::*', ['hello_world']);
+		$_[0]->register_rule('::Hello_Anything', '=', 'salut_');
 	};
+	
+	sub hello_world { print "Hello World.\n"; }
 	
 	
 	package Synopsis::Desc1;
 	use Package::Autoloader sub{eval shift};
 	
-	yn(!defined(&hola__mundo));
-	yn(potentially_defined('hola__mundo'));
-
-	hola__mundo();
-
-	yn(defined(&hola__mundo));
+	yn(!defined(&hello_world));
+	yn(potentially_defined('hello_world'));
+	
+	hello_world(); # first rule
+	
+	yn(defined(&hello_world));
 	
 	
 	package sisponyS::Desc2;
@@ -38,16 +35,26 @@ Package::Autoloader::Generator::Hello_Anything - full example from synopsis
 	
 	my $obj = bless( \(my $o = 0), 'sisponyS::Desc2');
 	
-	yn(!potentially_defined('hola__mundo'));
+	yn(!potentially_defined('hello_world')); # name is sisponyS::
 	yn(!defined(&salut_monde));
 	yn(!potentially_defined('salut_monde'));
-	yn($obj->can('salut_monde'));
+	yn($obj->potentially_can('salut_monde')); # no autovivification
+	yn($obj->can('salut_monde')); # with autovivification
 	
-	$obj->salut_monde();
+	$obj->salut_monde(); # second rule
 	
 	yn(!defined(&sisponyS::Desc2::salut_monde));
 	yn(!defined(&Synopsis::Desc1::salut_monde));
 	yn(defined(&Synopsis::salut_monde));
+	
+	package main;
+	use Package::Autoloader sub{eval shift}, sub {
+		my $yn = q{
+	 		return(q{print STDOUT ($_[0] ? 'Yes' : 'No'), "\n";});
+		};
+		$_[0]->register_rule($yn, '*', 'yn');
+	};
+	
 	exit(0);
 
 

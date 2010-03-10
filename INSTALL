@@ -1,5 +1,5 @@
-Although it appears that the interfaces finally settle, don't take them
-for granted. Anything might change. Only install if you're adventerous.
+For versions of Perl before 5.10, install MRO::Compat first and enable it
+by editing the file lib/Package/Autoloader/Package.pm.
 
 Other than that, Package::Autoloader is fairly straightforward in terms of
 installation. 
@@ -9,7 +9,8 @@ installation.
 	make test
 	make install
 
-Package::Autoloader makes use of the follwoing external modules, most of which are part of the Perl5 core. I guess it only works for perl 5.10 upwards, because of the mro stuff and parent.
+Package::Autoloader makes use of the follwoing external modules, most
+of which are part of the Perl5 core.
 
 	Scalar::Util
 	mro
