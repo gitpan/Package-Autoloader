@@ -2,10 +2,10 @@
 use strict;
 use Carp qw();
 use DBI;
+use Package::Autoloader sub{eval shift};
 use Package::Autoloader::Generator::SQL_Table;
 warn('See the manual page Package::Autoloader::Generator::SQL_Table');
 
-use Package::Autoloader sub{eval shift};
 
 my $dbh = DBI->connect('DBI:mysql:perlsub', *LOGIN*, *PASSWORD*) ||
 	Carp::confess("connect: $DBI::errstr\n");
@@ -13,10 +13,11 @@ my $dbh = DBI->connect('DBI:mysql:perlsub', *LOGIN*, *PASSWORD*) ||
 # another lexical variable visible to hello_world()
 my $date = scalar(localtime(time()));
 
-Package::Autoloader::again sub{eval shift}, sub {
-	my $generator = Package::Autoloader::Generator::SQL_Table->new($_[0], $dbh);
-	$generator->prototypes($_[0], $dbh);
-	$_[0]->register_rule($generator, '=', $generator->matcher($dbh));
+{
+	my $pkg = Package::Autoloader->new(sub{eval shift});
+	my $generator = Package::Autoloader::Generator::SQL_Table->new($pkg, $dbh);
+	$generator->prototypes($pkg, $dbh);
+	$pkg->register_rule($generator, '=', $generator->matcher($dbh));
 };
 
 yn(potentially_defined('hello_worlds'));

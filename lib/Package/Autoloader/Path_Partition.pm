@@ -26,8 +26,6 @@ sub new {
 	return($search, $self);
 }
 
-#sub path { return($_[0][ATB_PATH]); };
-
 sub first {
 	my $self = shift;
 	my $s123 = $self->[ATB_123];
@@ -42,7 +40,7 @@ sub first {
 sub not_self {
 	my $self = shift;
 	my $s123 = $self->[ATB_123];
-	return unless($s123->[1]);
+	return unless ($s123->[1]);
 	splice(@{$self->[ATB_PATH]}, $s123->[0], 1);
 	$s123->[4] -= 1;
 	$s123->[2] -= 1;
@@ -63,7 +61,7 @@ sub second {
 sub not_hierarchy {
 	my $self = shift;
 	my $s123 = $self->[ATB_123];
-	return unless($s123->[3]);
+	return unless ($s123->[3]);
 	splice(@{$self->[ATB_PATH]}, $s123->[2], $s123->[3]);
 	$s123->[4] -= $s123->[3];
 	$s123->[3] = 0;
@@ -82,7 +80,7 @@ sub third {
 sub not_globally {
 	my $self = shift;
 	my $s123 = $self->[ATB_123];
-	return unless($s123->[5]);
+	return unless ($s123->[5]);
 	splice(@{$self->[ATB_PATH]}, $s123->[4], 1);
 	$s123->[5] = 0;
 	return;

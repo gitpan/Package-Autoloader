@@ -40,6 +40,10 @@ The 'no quoting' feature is in the generator class and cited here:
 
 This way you can transport information from the defining package or the generator into the requesting package. And vice versa. No serialization and no quoting required.
 
+Set this package global to allow the generator to eventually trigger other generators. Nothing wrong with that, it just exists to highlight what to look for when writing generators.
+
+$Package::Autoloader::Generator::Closures_Demo::ONLY_DEFINED_ORIGINALS = 0;
+
 =head1 ANYTHING ELSE
 
 Please see the documentation of the upstream package L<Package::Autoloader>.

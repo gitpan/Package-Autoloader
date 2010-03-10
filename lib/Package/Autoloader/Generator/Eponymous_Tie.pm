@@ -2,6 +2,7 @@ package Package::Autoloader::Generator::Eponymous_Tie;
 use strict;
 use warnings;
 use SDBM_File;
+use Fcntl;
 use parent qw(
 	Package::Autoloader::Generator
 );
@@ -10,7 +11,7 @@ my %DIRECTORIES = ();
 sub pkg_directory($) {
 	my ($pkg_name) = (shift);
 
-	if(exists($DIRECTORIES{$pkg_name})) {
+	if (exists($DIRECTORIES{$pkg_name})) {
 		return($DIRECTORIES{$pkg_name});
 	}
 	my $pkg_file = $pkg_name;
@@ -34,16 +35,16 @@ sub new {
 	my ($class, $defining_pkg) = (shift, shift, shift);
 
 	my $pkg_directory = pkg_directory($defining_pkg->name);
-	tie(my %sub_bodies, 'SDBM_File', $pkg_directory, 1, 0640);
+	tie(my %sub_bodies, 'SDBM_File', $pkg_directory, O_RDONLY, 0);
 
 	my $generator = sub {
 		my ($pkg, $sub_name) = (shift, shift);
 
-		unless(exists($sub_bodies{$sub_name})) {
-			Carp::confess("No sub '$sub_name'");
+		unless (exists($sub_bodies{$sub_name})) {
+			return(Package::Autoloader::Generator::failure(undef, $sub_name, "::Eponymous_Tie [not in '$pkg_directory']"));
 		}
 		my $prototype = '';
-		if(exists($sub_bodies{"$sub_name-prototype"})) {
+		if (exists($sub_bodies{"$sub_name-prototype"})) {
 			$prototype = '('.$sub_bodies{"$sub_name-prototype"}.')';
 		}
 
@@ -61,11 +62,11 @@ sub prototypes {
 	my ($self, $pkg) = (shift, shift);
 
 	my $pkg_directory = pkg_directory($pkg->name);
-	tie(my %sub_bodies, 'SDBM_File', $pkg_directory, 1, 0640);
+	tie(my %sub_bodies, 'SDBM_File', $pkg_directory, O_RDONLY, 0);
 
 	my $code = '';
 	foreach my $key (keys(%sub_bodies)) {
-		next unless($key =~ m,^(\w+)-prototype,);
+		next unless ($key =~ m,^(\w+)-prototype,);
 		$code .= sprintf('sub %s(%s); ', $1, $sub_bodies{$key});
 	}
 	$pkg->transport(\$code);
@@ -74,11 +75,10 @@ sub prototypes {
 sub matcher {
 	my ($self, $defining_pkg) = (shift, shift);
 
-	tie(my %sub_bodies, 'SDBM_File', $defining_pkg->name, 1, 0640);
+	tie(my %sub_bodies, 'SDBM_File', $defining_pkg->name, O_RDONLY, 0);
 	return(sub {
 		return(exists($sub_bodies{$_[1]}));
 	});
 }
 
 1;
-

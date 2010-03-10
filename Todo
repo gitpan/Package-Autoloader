@@ -1,5 +1,19 @@
 Priority:
-	- tests for all features
+	- for a start, improve coverage of tests (see below)
+	- go beyond what Devel::Cover provides, e.g. variable number of arguments
 
 Nice-to-have:
-	- tracing/logging feature to document who defined and who used
+	- tracing/logging feature to document who defined and who used what
+
+
+----------------------------------- ------ ------ ------ ------ ------ ------
+File                                  stmt   bran   cond    sub   time  total
+----------------------------------- ------ ------ ------ ------ ------ ------
+blib/lib/Package/Autoloader.pm       100.0  100.0    n/a  100.0    6.2  100.0
+.../Package/Autoloader/Generator.pm   95.7   50.0   33.3  100.0    3.5   78.6
+...ib/Package/Autoloader/Package.pm   74.8   56.0   33.3   95.0   25.2   70.8
+...age/Autoloader/Path_Partition.pm  100.0  100.0    n/a  100.0   36.6  100.0
+...kage/Autoloader/Pre_Selection.pm  100.0  100.0  100.0  100.0   19.3  100.0
+blib/lib/Package/Autoloader/Rule.pm   77.8   64.3   25.0   72.7    9.3   69.3
+Total                                 87.5   71.4   36.4   93.4  100.0   82.5
+----------------------------------- ------ ------ ------ ------ ------ ------

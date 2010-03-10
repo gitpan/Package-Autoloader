@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:                Package-Autoloader
-version:             0.10
+version:             0.11
 abstract:            ~
 license:             perl
 author:              
@@ -8,9 +8,9 @@ author:
 generated_by:        ExtUtils::MakeMaker version 6.42
 distribution_type:   module
 requires:     
-    mro:                           0
-    parent:                        0
-    Test::Simple:                  0
+    mro:                           0.01
+    parent:                        0.01
+    Test::Simple:                  0.01
 meta-spec:
     url:     http://module-build.sourceforge.net/META-spec-v1.3.html
     version: 1.3

@@ -25,4 +25,25 @@ sub run {
 	return($code);
 };
 
+sub failure {
+	my ($pkg_name, $sub_name, $what) = @_;
+	my @where = caller;
+	my $failure = sub {
+		my @caller = caller();
+		my $msg = sprintf(
+			q{Undefined subroutine &%s::%s called at %s line %s.},
+			$pkg_name || $caller[0],
+			$sub_name,
+			$caller[1],
+			$caller[2])
+			."\n"
+			.'(Still undefined even after trying AUTOLOAD via Package::Autoloader'
+			."\n"
+			.sprintf(' and finally decided by %s.)', $what || $where[0])
+			."\n";
+		die($msg);
+	};
+	return($failure);
+}
+
 1;

@@ -21,7 +21,7 @@ my $autoloadcan = q{
 
 	our $AUTOLOAD;
 	sub AUTOLOAD {
-		my $sub_ref = $object->autoload_generic($AUTOLOAD, @_);
+		my $sub_ref = $object->autoload($AUTOLOAD, @_);
 		goto &$sub_ref if (defined($sub_ref));
 	}
 	sub can {
@@ -74,10 +74,10 @@ sub transport {
 	my ($self, $code_ref) = (shift, shift);
 
 	unless (defined($code_ref)) {
-		Carp::confess("No code.\n");
+		Carp::confess("No code to transport?\n");
 	}
 	unless (ref($code_ref) eq 'SCALAR') {
-		Carp::confess("Code not a scalar ref.\n");
+		Carp::confess("Code not a scalar reference.\n");
 	}
 	my $sa = $@;
 	my $rv = $self->[ATB_VISIT_POINT]->($$code_ref, @_);
@@ -92,12 +92,12 @@ sub transport {
 sub register_rule {
 	my ($self, $rule) = (shift, shift);
 
-	if(scalar(@_) == 0) { # no further arguments
+	if (scalar(@_) == 0) { # no further arguments
 		if (ref($rule) eq 'ARRAY') {
 			$rule = Package::Autoloader::Rule->new(@$rule);
-			$RULES->register_rule($rule, $rule->pre_select);
-		} elsif(blessed($rule)) {
-			$RULES->register_rule($rule, $rule->pre_select);
+			$RULES->register_rules($rule, $rule->pre_select);
+		} elsif (Scalar::Util::blessed($rule)) {
+			$RULES->register_rules($rule, $rule->pre_select);
 		} else {
 			Carp::confess("Wrong type of argument.");
 		}
@@ -108,7 +108,7 @@ sub register_rule {
 	if ($rule_ref eq '') {
 		if ($rule =~ m,(^|::)([\w_]+($|::))+,) {
 			my $class;
-			if(substr($rule, 0, 2) eq '::') {
+			if (substr($rule, 0, 2) eq '::') {
 				$class = "Package::Autoloader::Generator$rule";
 			} else {
 				$class = $rule;
@@ -135,7 +135,7 @@ sub($$;@) {
 		bless($rule, 'Package::Autoloader::Generator');
 	}
 
-	if(Scalar::Util::blessed($rule) and $rule->can('run')) {
+	if (Scalar::Util::blessed($rule) and $rule->can('run')) {
 		my @pkg_names = ($self->[ATB_PKG_NAME]);
 		my $wildcard = shift;
 		if ($wildcard eq '=') {
@@ -150,8 +150,8 @@ sub($$;@) {
 			Carp::confess("Don't know what to do with wildcard '$wildcard'.\n");
 		}
 
-		unless(defined($_[0])) {
-			if($rule->can('matcher')) {
+		unless (defined($_[0])) {
+			if ($rule->can('matcher')) {
 				$_[0] = $rule->matcher($self);
 			}
 		}
@@ -164,12 +164,12 @@ sub($$;@) {
 	return;
 };
 
-sub autoload_generic {
+sub autoload {
 	my ($self, $sub_name) = (shift, shift);
 
 	my $pkg_name = $self->[ATB_PKG_NAME];
 	if (($sub_name =~ s,^(.*)::,,) and ($pkg_name ne $1)) {
-		Carp::confess("($pkg_name ne $1)");
+		Carp::confess("($pkg_name ne $1)"); # assertion - goes soon
 	}
 	return(undef) if ($sub_name eq 'DESTROY');
 #	return(undef) if ($sub_name eq 'AUTOLOAD');
@@ -189,7 +189,7 @@ sub autoload_generic {
 	}
 
 	unless (defined($generator)) {
-		Carp::confess("Unable to create '$sub_name' for $pkg_name (no generator found).");
+		return(Package::Autoloader::Generator::failure(undef, $sub_name, 'package object: no rule found'));
 	}
 	return($generator->run($self, $pkg_name, $sub_name, @_));
 }
@@ -206,7 +206,7 @@ sub can_already {
 
 	my $ISA = mro::get_linear_isa($self->[ATB_PKG_NAME]);
 	my ($pkg, $generator) = Package::Autoloader::find_generator($ISA, $_[1], $_[0]);
-	return unless(defined($generator));
+	return unless (defined($generator));
 	return($generator->run($pkg, $self->[ATB_PKG_NAME], $_[1], @_));
 }
 

@@ -2,51 +2,100 @@
 
 =head1 NAME
 
-Package::Autoloader - wraps 'AUTOLOAD' with a modular interface
+Package::Autoloader - a modular and OO-aware interface to AUTOLOAD
 
 =head1 SYNOPSIS
 
-The following basic example demonstrates how subroutine generation is done and how packages can facilitate the potential. All examples in this document can be found as separate Perl files in the examples directory.
+The following code registers two rules for use by AUTOLOAD. It demonstrates the tasks you can address with Package::Autoloader: consume rules and define rules for automatic subroutine generation. All yes-no-tests are written to print 'Yes'.
+
 
 	package Synopsis;
 	use Package::Autoloader sub{eval shift}, sub {
-		$_[0]->register_rule('::Hello_Anything', '::*', 'hola_');
+		$_[0]->register_rule('::Export', '::*', ['hello_world']);
 		$_[0]->register_rule('::Hello_Anything', '=', 'salut_');
 	};
-
+	
+	sub hello_world { print "Hello World.\n"; }
+	
+	
 	package Synopsis::Desc1;
 	use Package::Autoloader sub{eval shift};
 	
-	hola__mundo(); # first rule
+	yn(!defined(&hello_world));
+	yn(potentially_defined('hello_world'));
+	
+	hello_world(); # first rule
+	
+	yn(defined(&hello_world));
+	
 	
 	package sisponyS::Desc2;
 	our @ISA = ('Synopsis');
 	use Package::Autoloader sub{eval shift};
 	
 	my $obj = bless( \(my $o = 0), 'sisponyS::Desc2');
+	
+	yn(!potentially_defined('hello_world')); # name is sisponyS::
+	yn(!defined(&salut_monde));
+	yn(!potentially_defined('salut_monde'));
+	yn($obj->potentially_can('salut_monde')); # no autovivification
+	yn($obj->can('salut_monde')); # with autovivification
+	
 	$obj->salut_monde(); # second rule
+	
+	yn(!defined(&sisponyS::Desc2::salut_monde));
+	yn(!defined(&Synopsis::Desc1::salut_monde));
+	yn(defined(&Synopsis::salut_monde));
+	
+	package main;
+	use Package::Autoloader sub{eval shift}, sub {
+		my $yn = q{
+	 		return(q{print STDOUT ($_[0] ? 'Yes' : 'No'), "\n";});
+		};
+		$_[0]->register_rule($yn, '*', 'yn');
+	};
+	
+	exit(0);
 
 
-The synopsis demonstrates the two things you can do with Package::Autoloader: consume rules and define rules for automatic subroutine generation.
+Code examples in this document can be found as separate Perl files in the examples directory.
 
-The dynamically generated subroutines greet_mundo and salut_monde print Hello plus the second part of their name to the screen. (The impartial translation is intentional to stress what is happening - this package is not about localisation.) The synopsis makes maximum use of convenience features, which hide the full flexibility of the interface. For more details on what happens above, see the tests for definedness in L<Package::Autoloader::Generator::Hello_Anything>.
+The dynamically generated subroutine salut_monde print Hello plus the second part of its name to the screen. (The impartial translation is intentional to stress what is happening - this package is not about localisation.) The synopsis makes maximum use of convenience features, which hide the full flexibility of the interface. For more details on what happens above, see the tests for definedness in L<Package::Autoloader::Generator::Hello_Anything>.
 
 
 =head1 WARNING
 
 This is an experimental module. It hasn't been thoroughly tested, making the probability of fatal bugs quiet high. The goal of the release is to document the current development.
 
-Another warning. Security considerations. This package allows you to facilitate different origins for subroutine definitions, which are then passed to eval(). Control over an origin - file system or data base - means control over your program. Keep that in mind to avoid unpleasant surprises.
+Another warning. This package allows you to facilitate different origins for subroutine definitions, which are then passed to eval(). Control over an origin - file system or data base - means control over your program. Keep that in mind to avoid unpleasant surprises.
 
 
 =head1 DESCRIPTION
 
-Package::Autoloader supplies packages with subroutine definitions on the fly. It requires individual activation with the sub-eval-shift like shown in the synopsis. This module complements L<Package::Transporter>.
+Package::Autoloader makes AUTOLOAD a two-line subroutine, which forwards all requests into a rule-based dispatch. Thus allowing more than one feature to be based on AUTOLOAD. Actual generation of subroutines is done by generator classes.
 
-Once a missing subroutine is encountered in a package, Perl's autoload mechanism forwards the request to the autoloader object of the package. The object uses a pre-selection tree to identify suitable rules and checks them for a matching generator. The rules are normally activated during compile time. If one is found, the generator should bring the requested subroutine into existence.
+Simple rules allow generators to be attached to requests for missing subroutines. This way generators can be kept generic. Wildcards for package names and subroutine names are supported. A pre-selection tree ensures that only relevant rules are considered.
 
-The authors personal guess is an amount up to two dozen modules, which automatically load subroutines in one way or the other. Package::Autoloader is unique in that it takes AUTOLOAD, but gives it back under the hood of a modular interface. It is not meant for any specific purpose other than providing the interface. Any specific functionality can be implemented via generators. See the examples directory for ideas what can be done with it.
+The $_[0] from the synopsis is a package object, which gives access to a package via a visit point. The object is monadic on a per-package basis, meaning that in the package Synopsis it is always the same $pkg and the 'new' is a 'new only if no old exists'. Execution of arbitrary code is done like this:
 
+	$pkg = Package::Autoloader->new(sub{eval shift});
+	$pkg->transport(\$code, $argument1, ...);
+
+Although the above is a more complicated way to say "eval $code", the $pkg object can be passed around and is available in the generator. Actually two $pkg objects are avaialble there, the one of the defining package ($defining_pkg) and the one of the consuming package ($pkg). The $arguments to transport enable exchange of living data structures between packages without serialisation into the string $code.
+
+Package::Autoloader affects only packages which use it. Consumption requires individual activation with the sub-eval-shift like shown in the synopsis. This module complements L<Package::Transporter>.
+
+The implementation should be straightforward and involves at least five method calls to respond to an AUTOLOAD request. Some informal code might illustrate what happens. Each step uses the results of the former step; details are omitted here.
+
+	AUTOLOAD(...)
+		$pkg->autoload(...)
+			$RULES->lookup(...)
+				$rule->check(...)
+				$rule->check(...) # eventually
+				...
+			$generator->run(...)
+		$pkg->transport(...)
+	goto &$autloaded_sub
 
 =head2 Motivation and Background
 
@@ -62,7 +111,7 @@ Another problem is the drain of Exporter. Autoloaded subroutines spring into exi
 
 Again, in the general case one would like to see the potential being exported, not the drain. Package::Autoloader provides that.
 
-Last but not least, the functions can, exists and defined are not aware of AUTOLOAD. That is a good thing, because it allows for differentiated views. But one would like to test for potential, too. Package::Autoloader adds new functions, which are called potentially_can and potentially_defined. There is no potentially_exists, because it is a subtle distinction from defined, which can't be made with the information in AUTOLOAD.
+Last but not least, the functions can, exists and defined are not aware of AUTOLOAD. That is a good thing, because it allows for differentiated views. But one would like to test for potential, too. Package::Autoloader adds new functions, which are called potentially_can and potentially_defined. They report potential without vivification of the subroutine. There is no potentially_exists, because it is a subtle distinction from defined, which can't be made with the information in AUTOLOAD.
 
 
 =head2 Consumption via Search Paths
@@ -71,33 +120,10 @@ The search path is a list of package names, which are searched for rules. Rules 
 
 By default the search path consists of the components of the package name. For the package A::B::C the name hierarchy is A::B::C, A::B::, A::, and ''. Any rule found on the way to the top is checked and if the check is successful, the search stops. You can modify the search path with the search proxy methods as follows.
 
-	package A::B::C;
-	# default search:
-	# 	A::B::C
-	# 	A::B::
-	# 	A::
-	# 	''
-	use Package::Autoloader sub{eval shift}, sub {
-		$_[0]->search->first('D');	# D before A::B::C
-		$_[0]->search->not_self;	# no A::B::C
-		$_[0]->search->second('D');	# D after A::B::C
-		$_[0]->search->not_hierarchy;	# no A::B::, A::
-		$_[0]->search->third('D');	# D before ''
-		$_[0]->search->not_globally;	# no ''
-		$_[0]->search->last('D');	# D after ''
-	};
-
-First and fourth are absolute, the rest are relative. Again, these features target very special requirements.
-
-For method lookup a full hierarchical search is started in each parent class. The following lines, added to the synopsis, should print the words No, No, Yes to the screen. The method salut_monde springs into existence as a subroutine in a parent class, because it is defined there only.
-
-	sub print_yn($) { print STDERR (($_[0]) ? 'Yes' : 'No'), "\n"; }
-	print_yn(defined(&sisponyS::Desc2::salut_monde));
-	print_yn(defined(&Synopsis::Desc1::salut_monde));
-	print_yn(defined(&Synopsis::salut_monde));
+For method lookup a full hierarchical search is started in each parent class. The last three lines from the synopsis, should remind you that the method salut_monde springs into existence as a subroutine in a parent class, because it is defined there only.
 
 
-=head2 Convenience Functions
+=head2 Convenience Function
 
 The method register_rule has a convenience mode, where it accepts three-argument rule shortcuts. The first argument is a generator, the second is a wildcard and the third is the matching subroutine pattern.
 
@@ -170,13 +196,19 @@ http://rt.cpan.org/NoAuth/Bugs.html?Dist=Package-Autoloader
 
 This is an early public release. Also see the Todo file. The documentation can't keep up with the development speed at the moment.
 
+=head2 Common Pitfalls
+
+The statement 'use Package::Autoloader' is executed during compile time. Some things are not available then. Like the DATA file handle or lexical variables. You can use Package::Autoloader->new, see sql_table.pl and DATA_section.pl.
+
+Matching subroutine names with '' means that you promise to generate anything. It's most likely not what you want. Example:
+
+	$_[0]->register_rule('Some_Generator_Class', '=', '');
+
 =head2 Prototypes
 
-See the generator 'SQL_Table' for an attempt to have prototypes with AUTOLOAD.
+See the generator 'SQL_Table' for an attempt to have prototypes with AUTOLOAD. Keep in mind AUTOLOAD ignores prototypes (for unknown reasons), so it's more an egg in a chicken-and-egg dilemma.
 
-Prototype checks occur at compile time, when AUTOLOAD isn't considered, yet. Therefore AUTOLOAD wasn't made aware of prototype definitions.
-
-Imagine the following situation, where subroutine A calls B and vice versa (so that you can't simply change the order):
+Imagine the following situation, where subroutine A calls B and vice versa (so that you can't simply change the order of their definition):
 
 	sub A($) { ... B(2, 8); ... }
 	sub B($) { ... A(7); ... }
@@ -185,7 +217,7 @@ Perl can't verify the arguments for the call to B(2, 8), because B is not define
 
 =head2 Constant Functions
 
-Constant Functions are inlined at compile time, when AUTOLOAD isn't considered, yet. Therefore you can't define constant functions via AUTOLOAD.
+Constant Functions are inlined at compile time, when AUTOLOAD isn't considered, yet. Therefore you can't define constant functions via AUTOLOAD at the moment (Perl 5.10/5.11).
 
 =head2 CORE::defined and UNIVERSAL::can
 
@@ -193,13 +225,6 @@ Both are left unmodified, because any re-definition could not be limited in scop
 
 Beside that, in a modified 'defined' you won't easily get the name of the subroutine it was called with. Example: defined(&some_routine) won't lead to 'some_routine' directly. 
 
-=head2 Common Pitfalls
-
-The statement 'use Package::Autoloader' is executed during compile time. Some things are not available then. Like the DATA file handle or lexical variables. You can use Package::Autoloader::again, see sql_table.pl and DATA_section.pl.
-
-Matching subroutine names with '' means that you promise to generate anything. It's most likely not what you want. Example:
-
-	$_[0]->register_rule('Some_Generator_Class', '=', '');
 
 =head1 AUTHOR
 

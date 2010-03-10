@@ -13,7 +13,7 @@ sub new {
 
                 my $sub_body = sprintf(
 			qq{print 'Hello %s\n'},
-			substr($sub_name, 6));
+			substr($sub_name, 6) || '');
  		return($sub_body);
         };
 	bless($generator, $class);

@@ -37,6 +37,7 @@ lib/Package/Autoloader/Generator/SQL_Table.pm
 lib/Package/Autoloader/Generator/SQL_Table.pod
 lib/Package/Autoloader/Package.pm
 lib/Package/Autoloader/Path_Partition.pm
+lib/Package/Autoloader/Path_Partition.pod
 lib/Package/Autoloader/Pre_Selection.pm
 lib/Package/Autoloader/Rule.pm
 lib/Package/Autoloader/Rule.pod
@@ -47,5 +48,7 @@ SIGNATURE
 t/01_warn.t
 t/02_plausibility.t
 t/03_basic.t
+t/04_path_partition.t
+t/05_pre_selection.t
 Todo
 META.yml                                 Module meta-data (added by MakeMaker)

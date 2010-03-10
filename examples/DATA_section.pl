@@ -2,10 +2,12 @@
 use strict;
 # just for completeness... you don't save much by postponing compilation
 
-use Package::Autoloader sub{eval shift};
+use Package::Autoloader;
 
 # this could be hidden in a generator class, but it's of no practical use
-Package::Autoloader::again sub{eval shift}, sub {
+
+{
+	my $pkg = Package::Autoloader->new(sub{eval shift});
 	my $buffer = join('', <DATA>);
 	my @matches = ($buffer =~ m,(?:^|\n)([\s\t]*sub[\s\t]*(\w+)[\s\t]*(\([^\)]*\))?[\s\t]*{[\s\t]*.*?\n[\s\t]*}[\s\t]*;?[\s\t]*\n+),sg);
 	my %subroutines = ();
@@ -15,7 +17,7 @@ Package::Autoloader::again sub{eval shift}, sub {
 	}
 	my $generator = sub {
 		my ($pkg, $sub_name) = (shift, shift);
-		unless(exists($subroutines{$sub_name})) {
+		unless (exists($subroutines{$sub_name})) {
 			Carp::confess("No subroutine '$sub_name' in __DATA__.");
 		}
 		# FIXME: also check prototype
@@ -23,13 +25,15 @@ Package::Autoloader::again sub{eval shift}, sub {
 			. "\nreturn(\\&$sub_name);";
 		return($pkg->transport(\$code));
 	};
-	$_[0]->register_rule($generator, '=', [keys(%subroutines)]);
+	$pkg->register_rule($generator, '=', [keys(%subroutines)]);
 };
 
 yn(potentially_defined('hello_worlds'));
 yn(potentially_defined('hello_world'));
 yn(defined(&hello_world));
+
 hello_world();
+
 yn(defined(&hello_world));
 exit(0);
 

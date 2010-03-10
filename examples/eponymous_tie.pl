@@ -4,19 +4,21 @@ use Carp qw();
 use SDBM_File;
 use Package::Autoloader::Generator::Eponymous_Tie;
 
-use Package::Autoloader sub{eval shift};
-
 # eponymous means the same name as the package file base name,
 # which is 'main' in this case (no package name set)
-Package::Autoloader::again sub{eval shift}, sub {
+unless (-f 'main.pag') {
+	print STDERR "Script can only be run from the examples directory or wherever the main.pag file is.\n";
+}
+
+use Package::Autoloader sub{eval shift}, sub {
 	my $generator = Package::Autoloader::Generator::Eponymous_Tie->new($_[0]);
 	$generator->prototypes($_[0]);
 	$_[0]->register_rule($generator, '=', $generator->matcher($_[0]));
 };
 
-yn(potentially_defined('hello_worlds'));
+yn(!potentially_defined('hello_worlds'));
 yn(potentially_defined('hello_world'));
-yn(defined(&hello_world));
+yn(!defined(&hello_world));
 hello_world();
 yn(defined(&hello_world));
 exit(0);

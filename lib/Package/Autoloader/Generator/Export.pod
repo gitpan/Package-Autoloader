@@ -32,6 +32,10 @@ Package::Autoloader::Generator::Export - on-demand export
 
 Takes the requested subroutine from the defining package. Makes no sense with '=' wildcard.
 
+Set this package global to allow the generator to eventually trigger other generators. Nothing wrong with that, it just exists to highlight what to look for when writing generators.
+
+$Package::Autoloader::Generator::Closures_Demo::ONLY_DEFINED_ORIGINALS = 0;
+
 =head2 Prototypes
 
 Prototype definitions are not supported. Although the rule could see which subroutines are for export in the defining package, get their prototype definition with prototype() and submit a prototype to each requesting package. This is unlikely to be implemented unless prototypes are honored for AUTOLOADed subroutines.

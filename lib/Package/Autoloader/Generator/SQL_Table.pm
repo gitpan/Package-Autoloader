@@ -29,12 +29,12 @@ sub new {
 		my ($pkg, $sub_name) = (shift, shift);
 
 		my $rv = $sth->execute($sub_name, $pkg->name, scalar(@_));
-		unless(defined($rv)) {
+		unless (defined($rv)) {
 			Carp::confess($DBI::errstr);
 		}
 		my $row = $sth->fetchrow_arrayref;
-		unless(defined($row)) {
-			Carp::confess("No suitable subroutine named '$sub_name' found.");
+		unless (defined($row)) {
+			return(Package::Autoloader::Generator::failure(undef, $sub_name, '::SQL_Table'));
 		}
 
 		my $code = sprintf($std_sub, 
@@ -71,11 +71,11 @@ sub matcher {
 	my $sth = $dbh->prepare($select);
 	return(sub {
 		my $rv = $sth->execute($_[1], $_[0], scalar(@_));
-		unless(defined($rv)) {
+		unless (defined($rv)) {
 			Carp::confess($DBI::errstr);
 		}
 		my $row = $sth->fetchrow_arrayref;
-		return unless(defined($row));
+		return unless (defined($row));
 
 	});
 }

@@ -9,7 +9,7 @@ my %DIRECTORIES = ();
 sub pkg_directory($) {
 	my ($pkg_name) = (shift);
 
-	if(exists($DIRECTORIES{$pkg_name})) {
+	if (exists($DIRECTORIES{$pkg_name})) {
 		return($DIRECTORIES{$pkg_name});
 	}
 	my $pkg_file = $pkg_name;
@@ -19,10 +19,10 @@ sub pkg_directory($) {
 	my $pkg_directory = $INC{$pkg_file} || $pkg_file;
 	$pkg_directory =~ s,\.pm$,,si;
 	
-	unless(-e $pkg_directory) {
+	unless (-e $pkg_directory) {
 		Carp::confess("Can't load from directory '$pkg_directory' - does not exist.");
 	}
-	unless(-d $pkg_directory) {
+	unless (-d $pkg_directory) {
 		Carp::confess("Can't load from directory '$pkg_directory' - not a directory.");
 	}
 
@@ -61,7 +61,7 @@ sub matcher {
 	opendir(D, $pkg_directory);
 	my %pl_files = ();
 	foreach my $file_name (readdir(D)) {
-		next unless($file_name =~ m/^(\w+)\.pl$/i, );
+		next unless ($file_name =~ m/^(\w+)\.pl$/i, );
 		$pl_files{$1} = 1;
 	}
 	closedir(D);

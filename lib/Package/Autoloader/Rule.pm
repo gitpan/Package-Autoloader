@@ -20,14 +20,14 @@ sub new {
 	my $pre_selection = [$pkg_match, $sub_match];
 
 	my $match_ref = ref($pkg_match);
-	if($match_ref eq '') {
+	if ($match_ref eq '') {
 		$pre_selection->[0] =~ s/\w*[^\w\:].*$//s;
 	} elsif ($match_ref eq 'CODE') {
 		$pre_selection->[0] = ''; # unless we have a matching object
 	}
 
 	$match_ref = ref($sub_match);
-	if($match_ref eq '') {
+	if ($match_ref eq '') {
 		$pre_selection->[1] = '';
 		if ($sub_match =~ m/^([a-z0-9]*_)/i) {
 			$pre_selection->[1] = $1 || '';

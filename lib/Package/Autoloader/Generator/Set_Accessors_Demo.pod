@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-Package::Autoloader::Generator::Set_Accessor_Demo - automatic set_-style accessors
+Package::Autoloader::Generator::Set_Accessors_Demo - automatic set_-style accessors
 
 =head1 SYNOPSIS
 

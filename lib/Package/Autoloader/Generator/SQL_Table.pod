@@ -6,6 +6,9 @@ Package::Autoloader::Generator::SQL_Table - store your subroutines in a database
 
 =head1 SYNOPSIS
 
+	use Package::Autoloader sub{eval shift};
+	use Package::Autoloader::Generator::SQL_Table;
+
 	use DBI;
 	my $dbh = DBI->connect('DBI:mysql:perlsub', LOGIN, PASSWORD)
 	|| Carp::confess("connect: $DBI::errstr\n");
@@ -13,17 +16,14 @@ Package::Autoloader::Generator::SQL_Table - store your subroutines in a database
 	# a lexical variable visible to hello_world()
 	my $date = scalar(localtime(time()));
 	
-	use Package::Autoloader;
-	Package::Autoloader::again sub{eval shift}, sub {
-		use Package::Autoloader::Generator::SQL_Database;
-		my $generator =
-			Package::Autoloader::Generator::SQL_Database
-			->new($_[0], $dbh);
-		$generator->prototypes;
-		$_[0]->register_rule
-			($generator, '=', $generator->matcher($dbh));
+	{
+		my $pkg = Package::Autoloader->new(sub{eval shift});
+		my $generator = Package::Autoloader::Generator::SQL_Table
+			->new($pkg, $dbh);
+		$generator->prototypes($pkg, $dbh);
+		$pkg->register_rule($generator, '=', $generator->matcher($dbh));
 	};
-	
+		
 	yn(!potentially_defined('hello_worlds'));
 	yn(potentially_defined('hello_world'));
 	yn(!defined(&hello_world));
@@ -59,7 +59,7 @@ Prototype definitions are supported, but have to be explicitely requested. It on
 		sub_package varchar(255),
 		sub_argc int,
 		sub_signature varchar(255),
-		sub_name varchar(255) NOT NULL,
+		sub_name varchar(251) NOT NULL,
 		sub_prototype varchar(255),
 		sub_body text NOT NULL,
 		__id int(10) unsigned NOT NULL auto_increment,

@@ -1,20 +1,20 @@
 #!/usr/bin/perl -W -T
 use strict;
-use Test::Simple tests => 30;
+use Test::Simple tests => 29;
 
 package Basic_Test;
 use Test::Simple;
 use Package::Autoloader sub{eval shift}, sub {
-	ok(ref($_[0]) eq 'Package::Autoloader::Package',
-		'T101: Convenience object of right type.');
 	my $i = 0;
 	my $generator = sub { 
 		$i += 7;
 		return(qq{sprintf('$i%s', '$_[1]')});
 	};
-	$_[0]->register_rule($generator, '=', 'tfrv1');
+
+	my $rule = Package::Autoloader::Rule->new($generator,
+		['Basic_Test', 'main'], ['tfrv1', 'tfrv3']);
+	$_[0]->register_rule($rule);
 	$_[0]->register_rule($generator, '::*', 'tfrv2');
-	$_[0]->register_rule($generator, '=', 'tfrv3');
 };
 
 ok(defined(&AUTOLOAD), 'T102: Got AUTOLOAD.');
