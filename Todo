@@ -3,6 +3,9 @@ Priority:
 	- go beyond what Devel::Cover provides, e.g. variable number of arguments
 
 Nice-to-have:
+	- have an option to restrict new rules to their own name
+	- same as above for main: only main can access ''
+	- have an option to unshift into the existing rules (helpful for '')
 	- tracing/logging feature to document who defined and who used what
 	- find out how 'use MRO::Compat;' could automatically be added for older Perls
 

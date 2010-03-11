@@ -128,11 +128,12 @@ sub($$;@) {
 %s
 }}, $rule);
 			local $@;
-			$rule = eval $code;
+			$rule = [eval $code];
 			Carp::confess($@) if ($@);
 			bless($rule, 'Package::Autoloader::Generator');
 		}
 	} elsif ($rule_ref eq 'CODE') {
+		$rule = [$rule];
 		bless($rule, 'Package::Autoloader::Generator');
 	}
 
@@ -153,7 +154,7 @@ sub($$;@) {
 
 		unless (defined($_[0])) {
 			if ($rule->can('matcher')) {
-				$_[0] = $rule->matcher($self);
+				$_[0] = $rule->matcher();
 			}
 		}
 
@@ -183,23 +184,27 @@ sub autoload {
 
 	my $generator;
 	if (Scalar::Util::blessed($_[0])) {
-		my $ISA = get_linear_isa($pkg_name);
+		my $ISA = mro::get_linear_isa($pkg_name);
 		($self, $generator) = Package::Autoloader::find_generator($ISA, $sub_name, @_);
+		unless (defined($generator)) {
+			return(Package::Autoloader::Generator::failure(undef, $sub_name, 'package object: no rule found'));
+		}
 	} else {
 		$generator = $self->find_generator($sub_name, @_);
+		unless (defined($generator)) {
+			return(Package::Autoloader::Generator::failure(undef, $sub_name, 'package object: no rule found'));
+		}
 	}
 
-	unless (defined($generator)) {
-		return(Package::Autoloader::Generator::failure(undef, $sub_name, 'package object: no rule found'));
-	}
 	return($generator->run($self, $pkg_name, $sub_name, @_));
 }
 
 sub find_generator {
+	my ($self, $sub_name) = (shift, shift);
 	return($RULES->lookup_rule(
-		$_[0][ATB_SEARCH_PATH],
-		$_[0][ATB_PKG_NAME],
-		$_[1], @_));
+		$self->[ATB_SEARCH_PATH],
+		$self->[ATB_PKG_NAME],
+		$sub_name, @_));
 }
 
 sub can_already {

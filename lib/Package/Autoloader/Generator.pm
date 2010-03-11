@@ -2,6 +2,8 @@ package Package::Autoloader::Generator;
 use strict;
 use warnings;
 
+sub ATB_GENERATOR() { 0 };
+
 my $std_sub = q{
 	sub %s { %s };
 	return(\&%s);
@@ -9,7 +11,7 @@ my $std_sub = q{
 sub run {
 	my ($self, $pkg, $pkg_name, $sub_name) = (shift, shift, shift, shift);
 
-	my $code = $self->($pkg, $sub_name, @_);
+	my $code = $self->[ATB_GENERATOR]->($pkg, $sub_name, @_);
 	return unless (defined($code));
 	if (ref($code) eq '') {
 		unless ($code =~ m,^[\n\t\s]*sub[\n\t\s],) {

@@ -5,6 +5,9 @@ use parent qw(
 	Package::Autoloader::Generator
 );
 
+sub ATB_PKG() { 1 };
+sub ATB_BASE_DIR() { 2 };
+
 my %DIRECTORIES = ();
 sub pkg_directory($) {
 	my ($pkg_name) = (shift);
@@ -42,23 +45,25 @@ sub new {
 		my $code = "require shift(\@_); return(\\&$sub_name);";
  		return($pkg->transport(\$code, $file_name));
 	};
-	bless($generator, $class);
+	my $self = [$generator, $defining_pkg, $pkg_directory];
+	bless($self, $class);
+	Internals::SvREADONLY(@{$self}, 1);
+
+	return($self);
 }
 
-
 sub prototypes {
-	my ($self, $pkg) = (shift, shift);
+	my ($self) = (shift);
 
-	my $file_name = pkg_directory($pkg->name) . '-prototypes.pl';
+	my $file_name = $self->[ATB_BASE_DIR] . '/-prototypes.pl';
 	my $code = "require shift(\@_);";
-	$pkg->transport(\$code, $file_name);
+	$self->[ATB_PKG]->transport(\$code, $file_name);
 }
 
 sub matcher {
-	my ($self, $pkg) = (shift, shift);
+	my ($self) = (shift);
 
-	my $pkg_directory = pkg_directory($pkg->name);
-	opendir(D, $pkg_directory);
+	opendir(D, $self->[ATB_BASE_DIR]);
 	my %pl_files = ();
 	foreach my $file_name (readdir(D)) {
 		next unless ($file_name =~ m/^(\w+)\.pl$/i, );

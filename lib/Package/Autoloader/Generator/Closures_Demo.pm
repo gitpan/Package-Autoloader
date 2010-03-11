@@ -34,7 +34,11 @@ return(\&%s);
  		return($sub_ref);
 	};
 
-	bless($generator, $class);
+	my $self = [$generator];
+	bless($self, $class);
+	Internals::SvREADONLY(@{$self}, 1);
+
+	return($self);
 }
 
 1;

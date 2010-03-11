@@ -16,8 +16,8 @@ my $date = scalar(localtime(time()));
 {
 	my $pkg = Package::Autoloader->new(sub{eval shift});
 	my $generator = Package::Autoloader::Generator::SQL_Table->new($pkg, $dbh);
-	$generator->prototypes($pkg, $dbh);
-	$pkg->register_rule($generator, '=', $generator->matcher($dbh));
+	$generator->prototypes();
+	$pkg->register_rule($generator, '=');
 };
 
 yn(potentially_defined('hello_worlds'));

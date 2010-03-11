@@ -1,0 +1,61 @@
+=pod
+
+=head1 NAME
+
+Package::Autoloader::Generator::Suggested_Use - automatically 'use MODULE'
+
+=head1 SYNOPSIS
+
+	use Package::Autoloader sub{eval shift}, sub {
+		$_[0]->register_rule('::Suggested_Use', '=');
+	};
+	
+	sub yn($) { print STDERR ($_[0] ? 'Yes' : 'No'), "\n"; };
+	yn(!defined(&anything));
+	yn(potentially_defined('anything')); # dangerous!
+	
+	print STDOUT uri_escape('Hello World.'), "\n";
+	
+	my $uri_base = bless(\(my $o = 'www.perl.org'), 'main');
+	$uri_base->scheme('http');
+	print STDOUT "URI: $$uri_base\n";
+	
+	confess('Bye World.');
+		
+	exit(0);
+
+=head1 DESCRIPTION
+
+Issues an 'use MODULE;' or 'use parent qw(MODULE);' if a subroutine is requested from it. Example: Issues 'use URI::Escape' if the subroutine 'uri_escape' is requested. Configurable. Default values in the data section of Suggested_Use::Suggestions. * means any and '' means empty type.
+
+Configure the generator by creating it manually and passing a manually created object of the class Package::Autoloader::Generator::Suggested_Use::Suggestions to it.
+
+=head2 Default Suggestions
+
+TYPE is the string OBJECT for a non-empty value of blessed($_[0]) and the return value of ref($_[0]) otherwise. ARGC is the argument count.
+
+	__DATA__
+	#NAME		TYPE	ARGC	MODULE
+	confess		''	*	Carp
+	croak		*	*	Carp
+	uri_escape	*	*	URI::Escape
+	uri_unescape	*	*	URI::Escape
+	each_array	*	*	List::MoreUtils
+	each_arrayref	*	*	List::MoreUtils
+	julian_day	*	*	Time::Piece
+	soundex_noxs	*	*	Text::Soundex
+	soundex_nara	*	*	Text::Soundex
+	soundex_unicode	*	*	Text::Soundex
+	soundex_nara_unicode	*	*	Text::Soundex
+	pack_U		*	*	Unicode::Normalize
+	h1		*	*	CGI
+	start_html	*	*	CGI
+	Dumper		*	*	Data::Dumper
+	cartesian_to_spherical	*	*	Math::Trig
+	ping_icmp	*	*	Net::Ping
+
+=head1 ANYTHING ELSE
+
+Please see the documentation of the upstream package L<Package::Autoloader>.
+
+=cut

@@ -7,7 +7,7 @@ use Package::Autoloader sub{eval shift}, sub {
 };
 
 sub hello_world() { print "Hello World.\n"; };
-sub yn() { print STDERR ($_[0] ? 'Yes' : 'No'), "\n"; };
+sub yn($) { print STDERR ($_[0] ? 'Yes' : 'No'), "\n"; };
 
 
 package Synopsis::Ex1;

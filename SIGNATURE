@@ -14,12 +14,12 @@ not run its Makefile.PL or Build.PL.
 -----BEGIN PGP SIGNED MESSAGE-----
 Hash: SHA1
 
-SHA1 65fae6362c71028e584eeb16139a56ce2a44577e Changes
+SHA1 4add5e2f9d315fb4f108b00603953aa5f55f1df5 Changes
 SHA1 9cdb21d4debe90ff1d40ac54cdca40b17df46f23 INSTALL
-SHA1 ea4173b422fe2acfaec529078d793e54c1ff2f48 MANIFEST
+SHA1 b8320dea0aa82883fc2bb6b101a615d985b60791 MANIFEST
 SHA1 18f8bdbb04015e3fd6de7f2c70f71f033628e8b0 Makefile.PL
 SHA1 7694b2d1540169e9214afa98715a4e2e09aed2ef README
-SHA1 2cafc6b007a71714ea6288ffa4bf2c723854b418 Todo
+SHA1 f3325fe2f7bb175fe59ad4377ee8536543b9721f Todo
 SHA1 1166e2f40cbe4720664a33ddb6ccaa45f9cdecb3 coding_style.txt
 SHA1 aec6b2ef1a23130a05d984bc853c1d5271ffdd48 examples/DATA_section.pl
 SHA1 f3c448e738e3fff5486f6fe738e25570f20e2187 examples/closures_demo.pl
@@ -28,47 +28,51 @@ SHA1 736153b7b1e3a7f755509f3dac4e9d1dc446b53b examples/eponymous_directory/-prot
 SHA1 d843c84315aee4ff18d4000e47ae663464fbce8c examples/eponymous_directory/hello_world.pl
 SHA1 ee1d0a2b36c61b9813f45b573a3b8b18789bb628 examples/eponymous_directory/yn.pl
 SHA1 52c187510b0303d6574cf49174d72eee4e997451 examples/eponymous_tie.pl
-SHA1 69bb2429029e8835169c6bc19263aea1a9514148 examples/export.pl
+SHA1 0405ca2c30be1e6676cf15aede7002dab508e550 examples/export.pl
 SHA1 da39a3ee5e6b4b0d3255bfef95601890afd80709 examples/main.dir
 SHA1 cd19404ae81b584d28dcf290d838e717dd27c4a4 examples/main.pag
 SHA1 48a4b2357f22ef35ba43c8fa29c3a0b17f037f57 examples/search_path.pl
 SHA1 bac1da669743f1da91385dbde0cafbe780e536c7 examples/set_accessors-packaged.pl
 SHA1 e4dd1b39c4f0e454e743ddf52499b261219254c6 examples/set_accessors-standalone.pl
-SHA1 b575ac72724196c45c5081df541210a51be5d405 examples/sql_table.pl
+SHA1 bb31d43add4123d14492fe04bc74ddbda4feb737 examples/sql_table.pl
+SHA1 e3a4d498581bf4485a2f357ba01ff90fdbd50d63 examples/suggested_use.pl
 SHA1 ba4e75cfad1f44bd86ca8ba3ed012d37f63f0051 examples/synopsis.pl
-SHA1 6a664ea68fcc403f618baa06b51c1ae2e6a9f09d lib/Package/Autoloader.pm
-SHA1 8aef23935bad5156b0942ed0baee66cc82b6cca8 lib/Package/Autoloader.pod
-SHA1 2074091761e3455e3b10ef7df6f5f2f5a2198da7 lib/Package/Autoloader/Generator.pm
+SHA1 8d1fb8483d4f877fbab01e75111ca9eacd2a7304 lib/Package/Autoloader.pm
+SHA1 c6b8a0b6c3bf88ece448985483ea6c88866a0af5 lib/Package/Autoloader.pod
+SHA1 5e69550686b3efe92029d2a91c419f8b280698bb lib/Package/Autoloader/Generator.pm
 SHA1 ec7614f0b6c6e0d4086858c6ebf3d9ea9af12e36 lib/Package/Autoloader/Generator.pod
-SHA1 a8b2d97a7bd5b9dcf9c4088865f146d6c60b8ee2 lib/Package/Autoloader/Generator/Closures_Demo.pm
+SHA1 5e33731f1e9c34fff05a5fa967b2fc3ab6f0ecf0 lib/Package/Autoloader/Generator/Closures_Demo.pm
 SHA1 0188422a84afd0423ead5e7a04f97afddd5bbde5 lib/Package/Autoloader/Generator/Closures_Demo.pod
-SHA1 a21145944df230825fd3bd57fb4ebc044220b172 lib/Package/Autoloader/Generator/Eponymous_Directory.pm
+SHA1 de5c60ef77d5857a870f4f103fea02a84df0418b lib/Package/Autoloader/Generator/Eponymous_Directory.pm
 SHA1 2b7d6e2026cc23560948313c051db2dfdb3f2940 lib/Package/Autoloader/Generator/Eponymous_Directory.pod
-SHA1 1e64114e79d5be5494b37dbdedad749f61664d20 lib/Package/Autoloader/Generator/Eponymous_Tie.pm
+SHA1 47eab235909157620d075d10ea5ddb30adf0d3e8 lib/Package/Autoloader/Generator/Eponymous_Tie.pm
 SHA1 5c0a39c07f6cc06633cb40eaa0f262cd51f6cf02 lib/Package/Autoloader/Generator/Eponymous_Tie.pod
-SHA1 5ec1205292219a4bd2313b86bb0926f2f6b9de47 lib/Package/Autoloader/Generator/Export.pm
+SHA1 782cdf0b70289402f0d81196ba9ec9fc7899519b lib/Package/Autoloader/Generator/Export.pm
 SHA1 f4034d7003e7945673345d5347ba3ae9b2710788 lib/Package/Autoloader/Generator/Export.pod
-SHA1 2dde6ab30b908a39e4526ccea11e1200aa9a3b33 lib/Package/Autoloader/Generator/Hello_Anything.pm
+SHA1 18166502feea90c49077e6815a84a5b20e98e04c lib/Package/Autoloader/Generator/Hello_Anything.pm
 SHA1 39a68e03115e805de97df6decf24f96e439ff331 lib/Package/Autoloader/Generator/Hello_Anything.pod
-SHA1 f6ab548992e620e0500399da3153d68f9420d2be lib/Package/Autoloader/Generator/SQL_Table.pm
+SHA1 882296687b4fbebc6b36ca31c4fca8a533a9102e lib/Package/Autoloader/Generator/SQL_Table.pm
 SHA1 ea81e5e37ca4e387f679b96e7e46331e54fab8c9 lib/Package/Autoloader/Generator/SQL_Table.pod
-SHA1 4d8b23f77e5af28adeb830aa7acd13995214bc00 lib/Package/Autoloader/Generator/Set_Accessors_Demo.pm
+SHA1 17a9b87fc8ecdf49c4cc2873d300eac9849834a9 lib/Package/Autoloader/Generator/Set_Accessors_Demo.pm
 SHA1 c317d6b3e3f64cb86a1b42f5c09eb78be154ed82 lib/Package/Autoloader/Generator/Set_Accessors_Demo.pod
-SHA1 b0dc0ec8cc5e0164a196838265a4e34586c4d504 lib/Package/Autoloader/Package.pm
+SHA1 d56fea08c85e3f3f7f94bba3872fc2bb8e343461 lib/Package/Autoloader/Generator/Suggested_Use.pm
+SHA1 f64114877c474dd886478abee17771e298004d7f lib/Package/Autoloader/Generator/Suggested_Use.pod
+SHA1 b26e2c46f0df31fa94194127908609a60c755309 lib/Package/Autoloader/Generator/Suggested_Use/Suggestions.pm
+SHA1 bbf14cc06392bf8825be8842cf8f86f0b7910b91 lib/Package/Autoloader/Package.pm
 SHA1 ec5e4a013a1b421258b13b9c10bb3eff87313da8 lib/Package/Autoloader/Path_Partition.pm
 SHA1 da2c665ad50c43395cfb722cd015692c7b188e15 lib/Package/Autoloader/Path_Partition.pod
 SHA1 a9c6cfc2ba8e4dc9e2e27ebebb0db8e69565da28 lib/Package/Autoloader/Pre_Selection.pm
 SHA1 baec010f280292632b5d33d877d63bc10769f9c9 lib/Package/Autoloader/Rule.pm
 SHA1 64a1c1492c30db5dc85800a6e8bbb3f7dada261a lib/Package/Autoloader/Rule.pod
 SHA1 0cca6f5dd8537bc239b709fd772ecabaf3d0fd34 t/01_warn.t
-SHA1 8b60f9cbf773e3688f61892c61ba9d2292265101 t/02_plausibility.t
-SHA1 8fa7a8c748f13c95b7cab06c8598360148059e36 t/03_basic.t
+SHA1 922b54d6dcc6312fb68d1276597f6b213dcfb34c t/02_plausibility.t
+SHA1 dbca103b0fa4f041caa6b7b75763e3900753aa70 t/03_basic.t
 SHA1 1230195a27685ed83f9f15bd1003cb0e85e55e5f t/04_path_partition.t
 SHA1 73d00cf6644a2c03beede42fc17df08ba1aa95bb t/05_pre_selection.t
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v2.0.9 (GNU/Linux)
 
-iEYEARECAAYFAkuYKyEACgkQdnhEwsG7x7phLgCgl8VZQghOoRUM2e/tADJ5WcOU
-Uq8An2z8t3z1VQtHAbU7mUkO3Vs3aQsG
-=xR5K
+iEYEARECAAYFAkuY2EAACgkQdnhEwsG7x7r7+gCeJLs+G8/WDS8jMl85smDFOL+3
+FU4An0pX5Guy6GmzzfytWQJD8i7RUiY1
+=tXmY
 -----END PGP SIGNATURE-----

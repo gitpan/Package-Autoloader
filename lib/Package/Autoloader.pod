@@ -21,7 +21,7 @@ The following code registers two rules for use by AUTOLOAD. It demonstrates the 
 	package Synopsis::Desc1;
 	use Package::Autoloader sub{eval shift};
 	
-	hello_world(); # first rule
+	hello_world(); # first rule - export on demand
 	
 	
 	package sisponyS::Desc2;
@@ -29,11 +29,11 @@ The following code registers two rules for use by AUTOLOAD. It demonstrates the 
 	use Package::Autoloader sub{eval shift};
 	
 	my $obj = bless( \(my $o = 0), 'sisponyS::Desc2');
-	$obj->salut_monde(); # second rule
+	$obj->salut_monde(); # second rule - definition on demand
 	exit(0);
 
 
-To check your understanding of what is happending above, see the tests for definedness in the documentation of L<Package::Autoloader::Generator::Hello_Anything>. Code from the documentation can be found in individual Perl files in the examples directory.
+To check your understanding of what is happening above, see the tests for definedness in the documentation of L<Package::Autoloader::Generator::Hello_Anything>. It's really worth reading that documentation first, because the synopsis doesn't tell you what goes on. Code from the documentation can be found in individual Perl files in the examples directory.
 
 The dynamically generated subroutine salut_monde print Hello plus the second part of its name to the screen. (The impartial translation is intentional to stress what is happening - this package is not about localisation.) The synopsis makes maximum use of convenience features, which hide the full flexibility of the interface. 
 
@@ -93,14 +93,14 @@ Last but not least, the functions can, exists and defined are not aware of AUTOL
 
 The search path is a list of package names, which are searched for rules. Rules decide autonomously whether they actually apply to a missing subroutine or not. There is no need to set the search path explicitly, but the default one has to be explained.
 
-By default the search path consists of the components of the package name. For the package A::B::C the name hierarchy is A::B::C, A::B::, A::, and ''. Any rule found on the way to the top is checked and if the check is successful, the search stops. You can modify the search path with the search proxy methods as follows.
+By default the search path consists of the components of the package name. For the package A::B::C the name hierarchy is A::B::C, A::B::, A::, and ''. Any rule found on the way to the top is checked and if the check is successful, the search stops. You can modify the search path with the search proxy methods as described in L<Package::Autoloader::Path_Partition>.
 
-For method lookup a full hierarchical search is started in each parent class. The last three lines from the synopsis, should remind you that the method salut_monde springs into existence as a subroutine in a parent class, because it is defined there only.
+For method lookup a full hierarchical search is started in each parent class. The last three lines from the synopsis (full version in ::Hello_Anything), should remind you that the method salut_monde springs into existence as a subroutine in a parent class, because it is defined there only.
 
 
 =head2 Convenience Function
 
-The method register_rule has a convenience mode, where it accepts three-argument rule shortcuts. The first argument is a generator, the second is a wildcard and the third is the matching subroutine pattern.
+The method register_rule has a convenience mode, where it accepts three-argument rule short cuts. The first argument is a generator, the second is a wildcard and the third is the matching subroutine pattern.
 
 Minimally the generator is the textual body of a subroutine, which should at least generate textual bodies of other subroutines. Alternatively you can give a reference to a subroutine, a generator object or the (partial) name of a generator class. ('::Hello_Anything' will be interpreted as 'Package::Autoloader::Generator::Hello_Anything').
 
@@ -108,19 +108,13 @@ The wildcard is one of the following four symbols:
 
 =over 8
 
-=item * B<a single plus '+'> means the rule applies to the package itself only, although the generated subroutines follow inheritance;
+=item * a single plus B<'+'> means the rule applies to the package itself only, although the generated subroutines follow inheritance;
 
-=item * a double colon followed by an asterisk '::*'
+=item * a double colon followed by an asterisk b<'::*'> means the rule applies to package names deeper in the hierarchy, so that the rules defined in Synopis applies to Synopsis::Desc1;
 
-means the rule applies to package names deeper in the hierarchy, so that the rules defined in Synopis applies to Synopsis::Desc1;
+=item * a combination of the above symbols B<'+::*'> means a combination of their functions; and
 
-=item * a combination of the above symbols '+::*'
-
-means a combination of their functions; and
-
-=item * a single asterisk '*'
-
-means the rule applies globally other packages, including itself;
+=item * a single asterisk B<'*'> means the rule applies globally other packages, including itself;
 
 =back
 
@@ -173,20 +167,20 @@ This is an early public release. Also see the Todo file. The documentation can't
 
 =head2 Common Pitfalls
 
-The statement 'use Package::Autoloader' is executed during compile time. Some things are not available then. Like the DATA file handle or lexical variables. You can use Package::Autoloader->new, see sql_table.pl and DATA_section.pl.
+The statement 'use Package::Autoloader' is executed during compile time. Some things are not available then. Like the DATA file handle or lexical variables. Get the package object at run time with Package::Autoloader->new, see sql_table.pl and DATA_section.pl.
 
-Matching subroutine names with '' means that you promise to generate anything. It's most likely not what you want. Example:
+Matching subroutine names with '' means that you promise to generate anything. It's most likely not what you want, because if you find out you can't, then there is no way out other than indicating failure. Example:
 
 	$_[0]->register_rule('Some_Generator_Class', '=', '');
 
 =head2 Perl before 5.10
 
-Uncommment the line with 'use MRO::Compat' and comment the one with 'use mro' to make Package::Autoloader work with older versions of Perl5.
+Uncomment the line with 'use MRO::Compat' and comment the one with 'use mro' to make Package::Autoloader work with older versions of Perl5.
 
 
 =head2 Prototypes
 
-See the generator 'SQL_Table' for an attempt to have prototypes with AUTOLOAD. Keep in mind AUTOLOAD ignores prototypes (for unknown reasons), so it's more an egg in a chicken-and-egg dilemma.
+See the generator 'SQL_Table' for an attempt to have prototypes with AUTOLOAD. Keep in mind AUTOLOAD ignores prototypes (for unknown reasons), so the example is more an egg in a chicken-and-egg dilemma.
 
 Imagine the following situation, where subroutine A calls B and vice versa (so that you can't simply change the order of their definition):
 

@@ -7,6 +7,9 @@ use parent qw(
 	Package::Autoloader::Generator
 );
 
+sub ATB_PKG() { 1 };
+sub ATB_BASE_DIR() { 2 };
+
 my %DIRECTORIES = ();
 sub pkg_directory($) {
 	my ($pkg_name) = (shift);
@@ -55,27 +58,30 @@ sub new {
 			$sub_name);
  		return($pkg->transport(\$code));
 	};
-	bless($generator, $class);
+	my $self = [$generator, $defining_pkg, $pkg_directory];
+	bless($self, $class);
+	Internals::SvREADONLY(@{$self}, 1);
+
+	return($self);
 }
 
 sub prototypes {
-	my ($self, $pkg) = (shift, shift);
+	my ($self) = (shift);
 
-	my $pkg_directory = pkg_directory($pkg->name);
-	tie(my %sub_bodies, 'SDBM_File', $pkg_directory, O_RDONLY, 0);
+	tie(my %sub_bodies, 'SDBM_File', $self->[ATB_BASE_DIR], O_RDONLY, 0);
 
 	my $code = '';
 	foreach my $key (keys(%sub_bodies)) {
 		next unless ($key =~ m,^(\w+)-prototype,);
 		$code .= sprintf('sub %s(%s); ', $1, $sub_bodies{$key});
 	}
-	$pkg->transport(\$code);
+	$self->[ATB_PKG]->transport(\$code);
 }
 
 sub matcher {
-	my ($self, $defining_pkg) = (shift, shift);
+	my ($self) = (shift);
 
-	tie(my %sub_bodies, 'SDBM_File', $defining_pkg->name, O_RDONLY, 0);
+	tie(my %sub_bodies, 'SDBM_File', $self->[ATB_BASE_DIR], O_RDONLY, 0);
 	return(sub {
 		return(exists($sub_bodies{$_[1]}));
 	});

@@ -14,6 +14,7 @@ examples/search_path.pl
 examples/set_accessors-packaged.pl
 examples/set_accessors-standalone.pl
 examples/sql_table.pl
+examples/suggested_use.pl
 examples/synopsis.pl
 INSTALL
 lib/Package/Autoloader.pm
@@ -34,6 +35,9 @@ lib/Package/Autoloader/Generator/Set_Accessors_Demo.pm
 lib/Package/Autoloader/Generator/Set_Accessors_Demo.pod
 lib/Package/Autoloader/Generator/SQL_Table.pm
 lib/Package/Autoloader/Generator/SQL_Table.pod
+lib/Package/Autoloader/Generator/Suggested_Use.pm
+lib/Package/Autoloader/Generator/Suggested_Use.pod
+lib/Package/Autoloader/Generator/Suggested_Use/Suggestions.pm
 lib/Package/Autoloader/Package.pm
 lib/Package/Autoloader/Path_Partition.pm
 lib/Package/Autoloader/Path_Partition.pod

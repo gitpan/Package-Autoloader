@@ -29,7 +29,11 @@ return($sub_ref);
 
  		return($pkg->transport(\$sub_text, $ONLY_DEFINED_ORIGINALS));
 	};
-	bless($generator, $class);
+	my $self = [$generator];
+	bless($self, $class);
+	Internals::SvREADONLY(@{$self}, 1);
+
+	return($self);
 }
 
 1;

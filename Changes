@@ -1,13 +1,17 @@
+0.13	11 March 2010
+	- example how to trigger a 'use MODULE'
+	- default generator objects are now based on arrays
+
 0.12	11 March 2010
 	- cosmetic changes to the documentation
 	- mentions MRO::Compat as an option for older versions of Perl
 
 0.11	10 March 2010
-	- unified error message upon failure; ressembles Perl's
+	- unified error message upon failure; resembles Perl's
 	- failure function in Generator class
 
 0.10	09 March 2010
-	- support for prototypes (useless unless honored by AUTOLOAD)
+	- support for prototypes (useless unless honoured by AUTOLOAD)
 	- more documentation
 
 0.09	08 March 2010

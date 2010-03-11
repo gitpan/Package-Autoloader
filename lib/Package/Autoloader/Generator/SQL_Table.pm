@@ -5,6 +5,9 @@ use parent qw(
 	Package::Autoloader::Generator
 );
 
+sub ATB_PKG() { 1 };
+sub ATB_DBH() { 2 };
+
 my $select =  qq{
 SELECT sub_prototype, sub_body
 FROM _subroutines
@@ -44,7 +47,11 @@ sub new {
 			$sub_name);
  		return($pkg->transport(\$code));
 	};
-	bless($generator, $class);
+	my $self = [$generator, $defining_pkg, $dbh];
+	bless($self, $class);
+	Internals::SvREADONLY(@{$self}, 1);
+
+	return($self);
 }
 
 my $prototypes =  qq{
@@ -55,20 +62,20 @@ AND NOT ISNULL(sub_prototype)
 AND ((sub_package = ?) OR ISNULL(sub_package))
 };
 sub prototypes {
-	my ($self, $pkg, $dbh) = (shift, shift, shift);
+	my ($self) = (shift);
 
-	my $rows = $dbh->selectall_arrayref($prototypes, {}, $pkg->name);
+	my $rows = $self->[ATB_DBH]->selectall_arrayref($prototypes, {}, $self->[ATB_PKG]->name);
 	my $code = '';
 	foreach my $row (@$rows) {
 		$code .= sprintf('sub %s(%s); ', @$row);
 	}
-	$pkg->transport(\$code);
+	$self->[ATB_PKG]->transport(\$code);
 }
 
 sub matcher {
-	my ($self, $dbh) = (shift, shift);
+	my ($self) = (shift);
 
-	my $sth = $dbh->prepare($select);
+	my $sth = $self->[ATB_DBH]->prepare($select);
 	return(sub {
 		my $rv = $sth->execute($_[1], $_[0], scalar(@_));
 		unless (defined($rv)) {

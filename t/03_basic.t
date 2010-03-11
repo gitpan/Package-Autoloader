@@ -6,10 +6,11 @@ package Basic_Test;
 use Test::Simple;
 use Package::Autoloader sub{eval shift}, sub {
 	my $i = 0;
-	my $generator = sub { 
+	my $generator = [sub { 
 		$i += 7;
 		return(qq{sprintf('$i%s', '$_[1]')});
-	};
+	}];
+	bless($generator, 'Package::Autoloader::Generator');
 
 	my $rule = Package::Autoloader::Rule->new($generator,
 		['Basic_Test', 'main'], ['tfrv1', 'tfrv3']);
