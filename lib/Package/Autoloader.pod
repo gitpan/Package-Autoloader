@@ -167,6 +167,8 @@ This is an early public release. Also see the Todo file. The documentation can't
 
 =head2 Common Pitfalls
 
+AUTOLOAD is only triggered by Perl5, if something looks like a subroutine call. Paranthesis help a lot with that decision. Counter-example: my $result = calc_5 7, 8 expects calc_5 to exists at least as a (manually declared) prototype. But calc_5(7, 8) is fine for AUTOLOAD.
+
 The statement 'use Package::Autoloader' is executed during compile time. Some things are not available then. Like the DATA file handle or lexical variables. Get the package object at run time with Package::Autoloader->new, see sql_table.pl and DATA_section.pl.
 
 Matching subroutine names with '' means that you promise to generate anything. It's most likely not what you want, because if you find out you can't, then there is no way out other than indicating failure. Example:

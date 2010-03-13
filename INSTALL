@@ -1,3 +1,7 @@
+Installation only makes sense to follow the development. Although it
+appears that the interfaces finally settle, anything might
+change. Don't expect support for versions other than the current. 
+
 For versions of Perl before 5.10, install MRO::Compat first and enable it
 by editing the file lib/Package/Autoloader/Package.pm.
 

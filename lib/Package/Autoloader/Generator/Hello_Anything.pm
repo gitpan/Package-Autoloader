@@ -5,22 +5,13 @@ use parent qw(
 	Package::Autoloader::Generator
 );
 
-sub new {
-	my ($class, $defining_pkg) = (shift, shift);
+sub implement {
+	my ($self, $pkg, $sub_name) = (shift, shift, shift);
 
-        my $generator = sub {
-		my ($pkg, $sub_name) = (shift, shift);
-
-                my $sub_body = sprintf(
-			qq{print 'Hello %s\n'},
-			substr($sub_name, 6) || '');
- 		return($sub_body);
-        };
-	my $self = [$generator];
-	bless($self, $class);
-	Internals::SvREADONLY(@{$self}, 1);
-
-	return($self);
+	my $sub_body = sprintf(
+		qq{print 'Hello %s\n'},
+		substr($sub_name, 6) || '');
+	return($sub_body);
 }
 
 1;

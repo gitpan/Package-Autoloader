@@ -22,7 +22,7 @@ yn(defined(&hello_world));
 
 
 package sisponyS::Desc2;
-our @ISA = ('Synopsis');
+BEGIN {our @ISA = ('Synopsis')}; # to be correct
 use Package::Autoloader sub{eval shift};
 
 my $obj = bless( \(my $o = 0), 'sisponyS::Desc2');

@@ -5,25 +5,15 @@ use parent qw(
 	Package::Autoloader::Generator
 );
 
-sub new {
-	my ($class, $defining_pkg) = (shift, shift);
+sub implement {
+	my ($self, $pkg, $sub_name) = (shift, shift, shift);
 
-        my $generator = sub {
-		my ($pkg, $sub_name) = (shift, shift);
-
-                my $name = substr($sub_name, 4);
-                my $sub_text = sprintf(q{
+	my $sub_text = sprintf(q{
                         my $self = shift;
                         $self->{%s} = shift;
-                }, $name);
-
- 		return($sub_text);
-        };
-	my $self = [$generator];
-	bless($self, $class);
-	Internals::SvREADONLY(@{$self}, 1);
-
-	return($self);
+                }, substr($sub_name, 4));
+	
+	return($sub_text);
 }
 
 1;

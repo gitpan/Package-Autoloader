@@ -1,6 +1,6 @@
 #!/usr/bin/perl -W -T
 use strict;
-use Test::Simple tests => 11;
+use Test::Simple tests => 10;
 
 local($@);
 eval qq{hello_world();};
@@ -40,16 +40,14 @@ my $a = time;
 	local($@);
 	eval q{$pkg->transport($code);};
 	ok($@, 'T007: Normal scalar for transport is error.');
-	eval q{$pkg->transport();};
-	ok($@, 'T008: Empty transport is error.');
 }
 
 my $found = Package::Autoloader::find_generator(['*']);
-ok(!defined($found), 'T009: Impossible ISA value');
+ok(!defined($found), 'T008: Impossible ISA value');
 
 use Package::Autoloader::Rule;
 my $rule = Package::Autoloader::Rule->new(sub{}, '', '');
 ok(ref($rule) eq 'Package::Autoloader::Rule',
-	'T010: Package::Autoloader::Rule works.');
+	'T009: Package::Autoloader::Rule works.');
 
 exit(0);

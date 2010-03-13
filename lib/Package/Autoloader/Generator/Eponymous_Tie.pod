@@ -48,13 +48,13 @@ The prototypes are given by appending the string '-prototype' to the key. See 'h
 	
 =head1 Initial Creation
 
-The following perl code was used to set up the main.(pag|dir)
-for the example.
+The following perl code was used to set up the main.dbm for the example.
 
-	# thisis now main.pag was created:
-	use SDBM_File;
+	# this is now main.dbm was created:
+	use GDBM_File;
 	use Fcntl;
-	tie(my %sub_bodies, 'SDBM_File', __PACKAGE__, O_RDWR|O_CREAT, 0644);
+	tie(my %sub_bodies, 'GDBM_File', __PACKAGE__.'.dbm',
+		O_RDWR|O_CREAT, 0644);
 	$sub_bodies{'yn'} = q{print STDOUT ($_[0] ? 'Yes' : 'No'), "\n";};
 	$sub_bodies{'hello_world'} = q{print "Hello World.\n";};
 	$sub_bodies{'hello_world-prototype'} = q{};

@@ -1,5 +1,9 @@
+0.14	13 March 2010
+	- removed many temporary closures
+	- integrated the concept of constant functions from Package::Transporter
+
 0.13	11 March 2010
-	- example how to trigger a 'use MODULE'
+	- example how to trigger a 'use MODULE' in Suggested_Use.pm
 	- default generator objects are now based on arrays
 
 0.12	11 March 2010

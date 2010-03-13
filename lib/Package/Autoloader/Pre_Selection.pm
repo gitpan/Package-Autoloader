@@ -68,12 +68,34 @@ sub lookup_rule {
 		next unless (defined($sub_rules));
 
 		foreach my $rule (@$sub_rules) {
-			my $generator = $rule->check($pkg_prefix, $sub_name, @_);
+			my $generator = 
+				$rule->check($pkg_prefix, $sub_name, @_);
 			next unless (defined($generator));
 			return($generator);
 		}
 	}
 	return(undef);
+}
+
+sub collect_generators {
+	my ($self, $pkg_list, $pkg_name, $sub_name) =
+		(shift, shift, shift, shift);
+
+	my @generators = ();
+	foreach my $pkg_prefix (@$pkg_list) {
+		next unless (exists($self->{$pkg_prefix}));
+		my $pkg_rules = $self->{$pkg_prefix};
+		next unless (exists($pkg_rules->{$sub_name}));
+		my $sub_rules = $pkg_rules->{$sub_name};
+
+		foreach my $rule (@$sub_rules) {
+			my $generator = 
+				$rule->check($pkg_prefix, $sub_name, @_);
+			next unless (defined($generator));
+			push(@generators, $generator);
+		}
+	}
+	return(\@generators);
 }
 
 #sub DESTROY {

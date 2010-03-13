@@ -6,7 +6,7 @@ package Basic_Test;
 use Test::Simple;
 use Package::Autoloader sub{eval shift}, sub {
 	my $i = 0;
-	my $generator = [sub { 
+	my $generator = [sub {
 		$i += 7;
 		return(qq{sprintf('$i%s', '$_[1]')});
 	}];

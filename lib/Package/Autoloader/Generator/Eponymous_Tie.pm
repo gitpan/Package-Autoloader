@@ -1,17 +1,18 @@
 package Package::Autoloader::Generator::Eponymous_Tie;
 use strict;
 use warnings;
-use SDBM_File;
+use GDBM_File;
 use Fcntl;
 use parent qw(
 	Package::Autoloader::Generator
 );
 
-sub ATB_PKG() { 1 };
-sub ATB_BASE_DIR() { 2 };
+sub ATB_PKG() { 0 };
+sub ATB_DB_FILE() { 1 };
+sub ATB_SUB_BODIES() { 2 };
 
 my %DIRECTORIES = ();
-sub pkg_directory($) {
+sub eponymous_db_file($) {
 	my ($pkg_name) = (shift);
 
 	if (exists($DIRECTORIES{$pkg_name})) {
@@ -21,11 +22,42 @@ sub pkg_directory($) {
 	$pkg_file =~ s,::,/,sg;
 	$pkg_file .= '.pm';
 
-	my $pkg_directory = $INC{$pkg_file} || $pkg_file;
-	$pkg_directory =~ s,\.pm$,,si;
+	my $file_name = $INC{$pkg_file} || $pkg_file;
+	$file_name =~ s,\.pm$,.dbm,si;
 
-	$DIRECTORIES{$pkg_name} = $pkg_directory;
-	return($pkg_directory);
+	$DIRECTORIES{$pkg_name} = $file_name;
+	return($file_name);
+}
+
+sub _init {
+	my ($self, $defining_pkg) = (shift, shift);
+
+	my $file_name = eponymous_db_file($defining_pkg->name);
+	tie(my %sub_bodies, 'GDBM_File', $file_name, O_RDONLY, 0);
+
+	$self->[ATB_DB_FILE] = $file_name;
+	$self->[ATB_SUB_BODIES] = \%sub_bodies;
+	return;
+}
+
+sub prototypes {
+	my ($self) = (shift);
+
+	my $code = '';
+	foreach my $key (keys(%{$self->[ATB_SUB_BODIES]})) {
+		next unless ($key =~ m,^(\w+)-prototype,);
+		$code .= sprintf('sub %s(%s); ',
+			$1, $self->[ATB_SUB_BODIES]->{$key});
+	}
+	$self->[ATB_PKG]->transport(\$code);
+}
+
+sub matcher {
+	my ($self) = (shift);
+
+	return(sub {
+		return(exists($self->[ATB_SUB_BODIES]->{$_[1]}));
+	});
 }
 
 my $std_sub = q{
@@ -34,57 +66,24 @@ my $std_sub = q{
 	};
 	return(\&%s);
 };
-sub new {
-	my ($class, $defining_pkg) = (shift, shift, shift);
+sub implement {
+	my ($self, $pkg, $sub_name) = (shift, shift, shift);
 
-	my $pkg_directory = pkg_directory($defining_pkg->name);
-	tie(my %sub_bodies, 'SDBM_File', $pkg_directory, O_RDONLY, 0);
-
-	my $generator = sub {
-		my ($pkg, $sub_name) = (shift, shift);
-
-		unless (exists($sub_bodies{$sub_name})) {
-			return(Package::Autoloader::Generator::failure(undef, $sub_name, "::Eponymous_Tie [not in '$pkg_directory']"));
-		}
-		my $prototype = '';
-		if (exists($sub_bodies{"$sub_name-prototype"})) {
-			$prototype = '('.$sub_bodies{"$sub_name-prototype"}.')';
-		}
-
-		my $code = sprintf($std_sub, 
-			$sub_name,
-			$prototype,
-			$sub_bodies{$sub_name},
-			$sub_name);
- 		return($pkg->transport(\$code));
-	};
-	my $self = [$generator, $defining_pkg, $pkg_directory];
-	bless($self, $class);
-	Internals::SvREADONLY(@{$self}, 1);
-
-	return($self);
-}
-
-sub prototypes {
-	my ($self) = (shift);
-
-	tie(my %sub_bodies, 'SDBM_File', $self->[ATB_BASE_DIR], O_RDONLY, 0);
-
-	my $code = '';
-	foreach my $key (keys(%sub_bodies)) {
-		next unless ($key =~ m,^(\w+)-prototype,);
-		$code .= sprintf('sub %s(%s); ', $1, $sub_bodies{$key});
+	my $sub_bodies = $self->[ATB_SUB_BODIES];
+	unless (exists($sub_bodies->{$sub_name})) {
+		return(Package::Autoloader::Generator::failure(undef, $sub_name, "::Eponymous_Tie [not in '$self->[ATB_DB_FILE]']"));
 	}
-	$self->[ATB_PKG]->transport(\$code);
-}
+	my $prototype = '';
+	if (exists($sub_bodies->{"$sub_name-prototype"})) {
+		$prototype = '('.$sub_bodies->{"$sub_name-prototype"}.')';
+	}
 
-sub matcher {
-	my ($self) = (shift);
-
-	tie(my %sub_bodies, 'SDBM_File', $self->[ATB_BASE_DIR], O_RDONLY, 0);
-	return(sub {
-		return(exists($sub_bodies{$_[1]}));
-	});
+	my $code = sprintf($std_sub, 
+		$sub_name,
+		$prototype,
+		$sub_bodies->{$sub_name},
+		$sub_name);
+	return($pkg->transport(\$code));
 }
 
 1;

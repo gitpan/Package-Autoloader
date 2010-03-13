@@ -5,11 +5,11 @@ use parent qw(
 	Package::Autoloader::Generator
 );
 
-sub ATB_PKG() { 1 };
-sub ATB_BASE_DIR() { 2 };
+sub ATB_PKG() { 0 };
+sub ATB_BASE_DIR() { 1 };
 
 my %DIRECTORIES = ();
-sub pkg_directory($) {
+sub eponymous_base_dir($) {
 	my ($pkg_name) = (shift);
 
 	if (exists($DIRECTORIES{$pkg_name})) {
@@ -19,37 +19,25 @@ sub pkg_directory($) {
 	$pkg_file =~ s,::,/,sg;
 	$pkg_file .= '.pm';
 
-	my $pkg_directory = $INC{$pkg_file} || $pkg_file;
-	$pkg_directory =~ s,\.pm$,,si;
+	my $base_dir = $INC{$pkg_file} || $pkg_file;
+	$base_dir =~ s,\.pm$,,si;
 	
-	unless (-e $pkg_directory) {
-		Carp::confess("Can't load from directory '$pkg_directory' - does not exist.");
+	unless (-e $base_dir) {
+		Carp::confess("Can't load from directory '$base_dir' - does not exist.");
 	}
-	unless (-d $pkg_directory) {
-		Carp::confess("Can't load from directory '$pkg_directory' - not a directory.");
+	unless (-d $base_dir) {
+		Carp::confess("Can't load from directory '$base_dir' - not a directory.");
 	}
 
-	$DIRECTORIES{$pkg_name} = $pkg_directory;
-	return($pkg_directory);
+	$DIRECTORIES{$pkg_name} = $base_dir;
+	return($base_dir);
 }
 
-sub new {
-	my ($class, $defining_pkg) = (shift, shift);
+sub _init {
+	my ($self, $defining_pkg) = (shift, shift);
 
-	my $pkg_directory = pkg_directory($defining_pkg->name);
-
-	my $generator = sub {
-		my ($pkg, $sub_name) = (shift, shift);
-
-		my $file_name = "$pkg_directory/$sub_name.pl";
-		my $code = "require shift(\@_); return(\\&$sub_name);";
- 		return($pkg->transport(\$code, $file_name));
-	};
-	my $self = [$generator, $defining_pkg, $pkg_directory];
-	bless($self, $class);
-	Internals::SvREADONLY(@{$self}, 1);
-
-	return($self);
+	$self->[ATB_BASE_DIR] = eponymous_base_dir($defining_pkg->name);
+	return;
 }
 
 sub prototypes {
@@ -74,6 +62,14 @@ sub matcher {
 	return(sub {
 		return(exists($pl_files{$_[1]}));
 	});
+}
+
+sub implement {
+	my ($self, $pkg, $sub_name) = (shift, shift, shift);
+
+	my $file_name = "$self->[ATB_BASE_DIR]/$sub_name.pl";
+	my $code = "require shift(\@_); return(\\&$sub_name);";
+	return($pkg->transport(\$code, $file_name));
 }
 
 1;

@@ -8,28 +8,43 @@ use parent qw(
 );
 our $VERBOSE = 1;
 
+sub ATB_PKG() { 0 };
 sub ATB_SUGGESTSIONS() { 1 };
 
-sub new {
-	my ($class, $defining_pkg) = (shift, shift);
+sub _init {
+	my ($self) = (shift);
 
-	my $suggestions = scalar(@_) ? shift :
-		Package::Autoloader::Generator::Suggested_Use::Suggestions->new();	
+	unless(defined($self->[ATB_SUGGESTSIONS])) {
+		$self->[ATB_SUGGESTSIONS] =
+			Package::Autoloader::Generator::Suggested_Use::Suggestions->new();
+	}
+	return;
+}
 
-	my $generator = sub {
-		my ($pkg, $sub_name) = (shift, shift);
+sub matcher {
+	my ($self) = (shift);
 
-		my $ref = Scalar::Util::blessed($_[0]) ? 'OBJECT' : ref($_[0]);
-		my $suggested = $suggestions->lookup($sub_name, $ref, scalar(@_));
+	return(sub {
+		my $ref = Scalar::Util::blessed($_[2]) ? 'OBJECT' : ref($_[2]);
+		return (defined($self->[ATB_SUGGESTSIONS]->lookup($_[1], $ref, scalar(@_)-2)));
 
-		unless (defined($suggested)) {
-			return(Package::Autoloader::Generator::failure(undef, $sub_name, '::Suggested_Use [no suggestion found]'));
-		}
-		my ($load, $module) = @$suggested;
+	});
+}
 
-		my $sub_text;
-		if ($load eq 'use') {
-			$sub_text = sprintf(q{
+sub implement {
+	my ($self, $pkg, $sub_name) = (shift, shift, shift);
+
+	my $ref = Scalar::Util::blessed($_[0]) ? 'OBJECT' : ref($_[0]);
+	my $suggested = $self->[ATB_SUGGESTSIONS]->lookup($sub_name, $ref, scalar(@_));
+
+	unless (defined($suggested)) {
+		return(Package::Autoloader::Generator::failure(undef, $sub_name, '::Suggested_Use [no suggestion found]'));
+	}
+	my ($load, $module) = @$suggested;
+	
+	my $sub_text;
+	if ($load eq 'use') {
+		$sub_text = sprintf(q{
 my $verbose = shift(@_);
 print STDERR qq{Loading suggested module '%s' to enable subroutine '%s'.\n} if ($verbose);
 use %s;
@@ -42,8 +57,8 @@ return(Package::Autoloader::Generator::failure(undef, '%s', q{::Suggested_Use ['
 			$sub_name, $sub_name, 
 			$module, $sub_name, $module, $sub_name,
 			$sub_name, $module);
-		} elsif ($load eq 'parent') {
-			$sub_text = sprintf(q{
+	} elsif ($load eq 'parent') {
+		$sub_text = sprintf(q{
 my $verbose = shift(@_);
 print STDERR qq{Loading suggested parent '%s' to enable method '%s'.\n} if ($verbose);
 use parent qw(%s);
@@ -55,27 +70,11 @@ return(Package::Autoloader::Generator::failure(undef, '%s', q{::Suggested_Use ['
 			$module,
 			$sub_name,
 			$sub_name, $module);
-		} else {
-			return(Package::Autoloader::Generator::failure(undef, $sub_name, "::Suggested_Use [invalid loading '$load']"));
-		}
+	} else {
+		return(Package::Autoloader::Generator::failure(undef, $sub_name, "::Suggested_Use [invalid loading '$load']"));
+	}
 
- 		return($pkg->transport(\$sub_text, $VERBOSE, $_[0]));
-	};
-	my $self = [$generator, $suggestions];
-	bless($self, $class);
-	Internals::SvREADONLY(@{$self}, 1);
-
-	return($self);
-}
-
-sub matcher {
-	my ($self) = (shift);
-
-	return(sub {
-		my $ref = Scalar::Util::blessed($_[2]) ? 'OBJECT' : ref($_[2]);
-		return (defined($self->[ATB_SUGGESTSIONS]->lookup($_[1], $ref, scalar(@_)-2)));
-
-	});
+	return($pkg->transport(\$sub_text, $VERBOSE, $_[0]));
 }
 
 1;

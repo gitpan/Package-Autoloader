@@ -15,6 +15,7 @@ use Package::Autoloader::Rule;
 use Package::Autoloader::Pre_Selection;
 use Package::Autoloader::Path_Partition;
 use Package::Autoloader::Generator;
+#use Package::Autoloader::Instant;
 my $RULES = Package::Autoloader::Pre_Selection->new(); 
 
 my $autoloadcan = q{
@@ -57,7 +58,7 @@ sub new {
 	bless($self, $class);
 	Internals::SvREADONLY(@{$self}, 1);
 
-	$self->transport(\$autoloadcan, $self);
+	$visit_point->($autoloadcan, $self);
 
 	return($self);
 }
@@ -74,17 +75,17 @@ sub set_visit_point {
 sub transport {
 	my ($self, $code_ref) = (shift, shift);
 
-	unless (defined($code_ref)) {
-		Carp::confess("No code to transport?\n");
-	}
+#	unless (defined($code_ref)) {
+#		Carp::confess("No code to transport?\n");
+#	}
 	unless (ref($code_ref) eq 'SCALAR') {
 		Carp::confess("Code not a scalar reference.\n");
 	}
 	my $sa = $@;
 	my $rv = $self->[ATB_VISIT_POINT]->($$code_ref, @_);
 	if ($@) {
-		print STDERR "Offending Code:\n", $$code_ref, "\n";
-		Carp::confess($@);
+		my $msg = "Offending Code:\n$$code_ref\n".$@;
+		Carp::confess($msg);
 	}
 	$@ = $sa;
 	return($rv);
@@ -102,69 +103,108 @@ sub register_rule {
 		} else {
 			Carp::confess("Wrong type of argument.");
 		}
-		return;
+		return($rule);
 	}
 
 	my $rule_ref = ref($rule);
+	my $generator;
 	if ($rule_ref eq '') {
-		if ($rule =~ m,(^|::)([\w_]+($|::))+,) {
-			my $class;
-			if (substr($rule, 0, 2) eq '::') {
-				$class = "Package::Autoloader::Generator$rule";
-			} else {
-				$class = $rule;
-			}
-			# shows the impractical parts of Perl5
-			my $class_for_require = $class;
-			$class_for_require =~ s,::,/,sg;
-			$class_for_require .= '.pm';
-			#local $!; # isn't this handled inside require?
-			require $class_for_require;
-			$rule = $class->new($self);
-		} else {
-			my $code = sprintf(q{
+		$generator = $self->create_generator($rule);
+	} elsif ($rule_ref eq 'CODE') {
+		$generator = Package::Autoloader::Generator->new($rule);
+	} else {
+		$generator = $rule;
+	}
+	unless (Scalar::Util::blessed($generator) and $generator->can('run')) {
+		Carp::confess("The result does not look like a generator.\n");
+	}
+
+	my @pkg_names = ($self->[ATB_PKG_NAME]);
+	my $wildcard = shift;
+	if ($wildcard eq '=') {
+	} elsif ($wildcard eq '=::*') {
+		push(@pkg_names, $pkg_names[0]);
+		$pkg_names[1] .= '::';
+	} elsif ($wildcard eq '::*') {
+		$pkg_names[0] .= '::';
+	} elsif ($wildcard eq '*') {
+		$pkg_names[0] = '';
+	} else {
+		Carp::confess("Don't know what to do with wildcard '$wildcard'.\n");
+	}
+	
+	unless (defined($_[0])) {
+		if ($generator->can('matcher')) {
+			$_[0] = $generator->matcher();
+		}
+	}
+	
+	$rule = Package::Autoloader::Rule->new($generator, \@pkg_names, @_);
+	$RULES->register_rules($rule, $rule->pre_select);
+
+	return($rule);
+}
+
+sub create_generator {
+	my ($self, $rule) = (shift, shift);
+
+	my $generator;
+	if ($rule =~ m,(^|::)([\w_]+($|::))+,) {
+		$generator = Package::Autoloader::Generator::new_class($rule, $self);
+	} else {
+		my $code = sprintf(q{
 sub($$;@) {
 	my($pkg, $sub_name, @args) = @_;
 %s
 }}, $rule);
-			local $@;
-			$rule = [eval $code];
-			Carp::confess($@) if ($@);
-			bless($rule, 'Package::Autoloader::Generator');
-		}
-	} elsif ($rule_ref eq 'CODE') {
-		$rule = [$rule];
-		bless($rule, 'Package::Autoloader::Generator');
+		local $@;
+		$rule = eval $code;
+		Carp::confess($@) if ($@);
+		$generator = Package::Autoloader::Generator->new($rule);
 	}
+	return($generator);
+}
 
-	if (Scalar::Util::blessed($rule) and $rule->can('run')) {
-		my @pkg_names = ($self->[ATB_PKG_NAME]);
-		my $wildcard = shift;
-		if ($wildcard eq '=') {
-		} elsif ($wildcard eq '=::*') {
-			push(@pkg_names, $pkg_names[0]);
-			$pkg_names[1] .= '::';
-		} elsif ($wildcard eq '::*') {
-			$pkg_names[0] .= '::';
-		} elsif ($wildcard eq '*') {
-			$pkg_names[0] = '';
-		} else {
-			Carp::confess("Don't know what to do with wildcard '$wildcard'.\n");
-		}
 
-		unless (defined($_[0])) {
-			if ($rule->can('matcher')) {
-				$_[0] = $rule->matcher();
-			}
-		}
+sub instant_cf {
+	my ($self, $class, $wild_card, $prefix, $from, $lifespan) =
+		(shift, shift, shift, shift, shift, shift);
 
-		my $real_rule = Package::Autoloader::Rule->new(
-			$rule, \@pkg_names, @_);
-		$RULES->register_rules($real_rule, $real_rule->pre_select);
-	}
+	my $generator = $self->create_generator("::Constant_Function$class");
+	$generator->take_from($from); # if(defined($from));
+	$generator->configure(@_);
+	my $rule = $self->register_rule($generator, $wild_card, $prefix);
+	$self->implement($prefix);
+	$rule->release() unless(defined($lifespan));
 
 	return;
-};
+}
+
+sub collect_generators {
+	my ($self, $how, $sub_name) = (shift, shift, shift);
+
+	my $search_path;
+	if($how eq '^') {
+		$search_path = mro::get_linear_isa($self->[ATB_PKG_NAME]);
+	} else {
+		$search_path = $self->[ATB_SEARCH_PATH]; 
+	}
+	return($RULES->collect_generators(
+		$search_path,
+		$self->[ATB_PKG_NAME],
+		$sub_name, @_));
+}
+
+sub implement {
+	my ($self, $sub_name) = (shift, shift);
+
+	my $generator = $self->find_generator($sub_name);
+	unless (defined($generator)) {
+		return(Package::Autoloader::Generator::failure(undef, $sub_name, 'package object: no rule found'));
+	}
+
+	return($generator->run($self, $self->[ATB_PKG_NAME], $sub_name));
+}
 
 sub autoload {
 	my ($self, $sub_name) = (shift, shift);

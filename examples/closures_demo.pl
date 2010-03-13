@@ -14,4 +14,6 @@ package Other;
 use Package::Autoloader sub{eval shift};
 
 print calc_5(7, 8), "\n"; # sets $correction = 5
+#my $result = calc_5 7, 8; # error
+
 exit(0);
