@@ -1,13 +1,1 @@
-Package::Autoloader - a modular and OO-aware interface to AUTOLOAD
-
-This is an experimental module and in relation to its complexity there
-are not enough tests available to consider it ready for general
-production use, yet.
-
-Package::Autoloader can be seen as a class for AUTOLOAD objects, which
-are managed behind a system of convenience methods. The objects
-provide potential instead of drain. The potential can be tested with
-two functions, potentially_can and potentially_defined.  For details,
-read the man page for Package::Autoloader.
-
-You might want to run the examples from the directory of the same name.
+Package::Autoloader was a fork from Package::Tranporter and has finally been merged back. Version 0.15 of Package::Autoloader can be considered to be the same as version 0.80 of Package::Tranporter. It has greatly speed up the development of the interface with a convincing result in terms of convenience and consistency. But it is no longer needed as a separate package, therefore removing from CPAN.
